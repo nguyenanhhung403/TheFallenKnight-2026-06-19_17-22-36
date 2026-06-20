@@ -24,7 +24,9 @@ public class CollectibleItem : MonoBehaviour
     [Header("--- Hiệu ứng trôi nổi (Floating) ---")]
     public float floatSpeed = 3f;
     public float floatAmplitude = 0.15f;
-    public float rotationSpeed = 15f;
+
+    [Header("--- Hiệu ứng Xoay 3D (Spinning Y) ---")]
+    public float rotationSpeed = 150f;
 
     [Header("--- Hiệu ứng Co giãn nhẹ (Pulsing Scale) ---")]
     public float scalePulseSpeed = 2.5f;
@@ -72,8 +74,8 @@ public class CollectibleItem : MonoBehaviour
         float scaleOffset = Mathf.Sin(Time.time * scalePulseSpeed) * scalePulseAmplitude;
         transform.localScale = baseScale * (1f + scaleOffset);
 
-        // 3. Tự xoay nhẹ quanh trục Z để tạo hiệu ứng phép thuật lung linh
-        transform.Rotate(Vector3.forward * rotationSpeed * Time.deltaTime);
+        // 3. Hiệu ứng xoay tròn 3D quanh trục Y (quay lật 360 độ)
+        transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
