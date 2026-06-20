@@ -167,6 +167,9 @@ public class PlayerController : MonoBehaviour
         // Nếu đang phòng thủ hoặc đang trong animation tấn công, không cho tấn công mới
         if (isDefending || isAttacking) return;
 
+        PlayerStats stats = GetComponent<PlayerStats>();
+        int damage = stats != null ? stats.TotalDamage : 15;
+
         // 1. Kiểm tra Run Attack (Tấn công khi đang chạy trên mặt đất)
         if (isGrounded && Mathf.Abs(horizontalInput) > 0.1f)
         {
@@ -177,6 +180,7 @@ public class PlayerController : MonoBehaviour
                 lastAttackTime = Time.time;
                 anim.ResetTrigger("RunAttack"); // Reset trước để tránh queue
                 anim.SetTrigger("RunAttack");
+                StartCoroutine(DealMeleeDamageDelay(0.25f, Mathf.RoundToInt(damage * 1.1f), false, true));
                 return;
             }
         }
@@ -188,6 +192,7 @@ public class PlayerController : MonoBehaviour
             lastAttackTime = Time.time;
             anim.ResetTrigger("Attack1"); // Reset trước để tránh queue
             anim.SetTrigger("Attack1");
+            StartCoroutine(DealMeleeDamageDelay(0.2f, damage, false, false));
         }
 
         // 3. Combo 2: Chuột phải (Fire2) -> Kích hoạt Attack2
@@ -197,6 +202,7 @@ public class PlayerController : MonoBehaviour
             lastAttackTime = Time.time;
             anim.ResetTrigger("Attack2"); // Reset trước để tránh queue
             anim.SetTrigger("Attack2");
+            StartCoroutine(DealMeleeDamageDelay(0.3f, Mathf.RoundToInt(damage * 1.25f), true, false));
         }
     }
 
@@ -484,6 +490,30 @@ public class PlayerController : MonoBehaviour
         isRunningAttack = false; // Reset trạng thái Run Attack
     }
 
+    private System.Collections.IEnumerator DealMeleeDamageDelay(float delay, int damage, bool isCombo2, bool runAttack)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (isDead) yield break;
+
+        // Điểm phát lực chém ở trước mặt người chơi
+        Vector2 attackPos = (Vector2)transform.position + (isFacingRight ? Vector2.right : Vector2.left) * 0.8f;
+        
+        // Sinh hiệu ứng slash visual chém kiếm để người chơi dễ căn phạm vi
+        SpawnSlashEffect(attackPos, isCombo2, runAttack);
+
+        // Vẽ tia / quét hình tròn kiểm tra va chạm
+        Collider2D[] targets = Physics2D.OverlapCircleAll(attackPos, 0.9f);
+        foreach (var target in targets)
+        {
+            if (target.gameObject != gameObject)
+            {
+                // Nếu trúng đối thủ (quái vật hoặc vật phẩm phá hủy được), gửi thông điệp TakeDamage
+                target.SendMessage("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+    }
+
     public bool IsDead()
     {
         return isDead;
@@ -610,6 +640,100 @@ public class PlayerController : MonoBehaviour
             float direction = (i % 2 == 0) ? 1f : -1f; // Một nửa xoáy xuôi, một nửa xoáy ngược chiều kim đồng hồ
             swirl.Setup(transform, color, startAngle, direction);
         }
+    }
+
+    public bool IsDefending()
+    {
+        return isDefending;
+    }
+
+    public void PlayBlockEffect()
+    {
+        if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+        flashCoroutine = StartCoroutine(FlashColorEffect(new Color(1f, 0.9f, 0.4f, 1f), 0.12f));
+    }
+
+    private void SpawnSlashEffect(Vector3 attackPos, bool isCombo2, bool runAttack)
+    {
+        GameObject slash = new GameObject("SlashEffect");
+        slash.transform.position = attackPos;
+        
+        Vector3 scale = new Vector3(isFacingRight ? 1f : -1f, 1f, 1f);
+        float baseScaleX = 1.2f;
+        float baseScaleY = 0.8f;
+        
+        if (isCombo2)
+        {
+            baseScaleX = 1.5f; 
+            baseScaleY = 1.1f;
+        }
+        else if (runAttack)
+        {
+            baseScaleX = 1.4f;
+            baseScaleY = 0.9f;
+        }
+        
+        slash.transform.localScale = new Vector3(scale.x * baseScaleX, baseScaleY, 1f);
+
+        SpriteRenderer sr = slash.AddComponent<SpriteRenderer>();
+        
+        // Sao chép material để hỗ trợ ánh sáng URP 2D (không bị mất màu/tối/magenta)
+        if (spriteRenderer != null)
+        {
+            sr.material = spriteRenderer.material;
+            sr.sortingLayerID = spriteRenderer.sortingLayerID;
+            sr.sortingLayerName = spriteRenderer.sortingLayerName;
+            sr.sortingOrder = spriteRenderer.sortingOrder + 2; 
+        }
+        else
+        {
+            sr.sortingOrder = 7;
+        }
+
+        Color slashColor = new Color(0.9f, 0.95f, 1f, 0.95f);
+        sr.sprite = CreateSlashSprite(64, 48, slashColor);
+
+        SlashMovement effectScript = slash.AddComponent<SlashMovement>();
+        effectScript.Setup(isFacingRight);
+    }
+
+    private Sprite CreateSlashSprite(int width, int height, Color color)
+    {
+        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        Color32[] pixels = new Color32[width * height];
+        
+        float cx = width * 0.1f; 
+        float cy = height * 0.5f;
+        float rOuter = width * 0.85f;
+        float rInner = width * 0.65f;
+        
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float dx = x - cx;
+                float dy = y - cy;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy * 1.5f); 
+                
+                Color c = Color.clear;
+                if (dist >= rInner && dist <= rOuter)
+                {
+                    float angle = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                    if (angle >= -60f && angle <= 60f)
+                    {
+                        float alpha = Mathf.Sin((angle + 60f) / 120f * Mathf.PI); 
+                        float edgeFade = Mathf.Sin((dist - rInner) / (rOuter - rInner) * Mathf.PI);
+                        c = new Color(color.r, color.g, color.b, color.a * alpha * edgeFade);
+                    }
+                }
+                pixels[y * width + x] = c;
+            }
+        }
+        
+        tex.SetPixels32(pixels);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.1f, 0.5f), 16f); // Đặt PPU = 16f
     }
 }
 
@@ -749,5 +873,42 @@ public class SwirlingAuraParticle : MonoBehaviour
         );
 
         transform.position = player.position + offset;
+    }
+}
+
+public class SlashMovement : MonoBehaviour
+{
+    private float lifetime = 0.16f;
+    private float elapsed = 0f;
+    private float rotationSpeed = 320f;
+    private bool faceRight;
+
+    public void Setup(bool facingRight)
+    {
+        faceRight = facingRight;
+        transform.rotation = Quaternion.Euler(0f, 0f, facingRight ? 40f : -40f);
+    }
+
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        float progress = elapsed / lifetime;
+
+        if (progress >= 1f)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        float rotDirection = faceRight ? -1f : 1f;
+        transform.Rotate(0f, 0f, rotDirection * rotationSpeed * Time.deltaTime);
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            Color c = sr.color;
+            c.a = Mathf.Lerp(0.95f, 0f, progress);
+            sr.color = c;
+        }
     }
 }

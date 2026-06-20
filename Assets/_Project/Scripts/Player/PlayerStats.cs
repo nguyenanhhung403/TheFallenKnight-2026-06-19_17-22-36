@@ -42,15 +42,24 @@ public class PlayerStats : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
+        PlayerController pc = GetComponent<PlayerController>();
+        if (pc != null && pc.IsDefending())
+        {
+            // Đỡ đòn thành công: Không mất HP, không bị đơ/hurt
+            Debug.Log("[PlayerStats] Đỡ đòn thành công! Không nhận sát thương.");
+            pc.PlayBlockEffect();
+            return;
+        }
+
         currentHP -= amount;
         currentHP = Mathf.Max(currentHP, 0);
 
         // Kích hoạt animation bị thương
-        GetComponent<PlayerController>()?.TakeDamage();
+        pc?.TakeDamage();
 
         if (currentHP <= 0)
         {
-            GetComponent<PlayerController>()?.Die();
+            pc?.Die();
         }
     }
 

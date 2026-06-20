@@ -302,4 +302,293 @@ public static class SetupUIEditor
             if (fill != null) mpUI.fillImage = fill.GetComponent<Image>();
         }
     }
+
+    [MenuItem("Tools/Setup Enemies and Potions")]
+    public static void SetupEnemiesAndPotions()
+    {
+        // Tự động tạo Tag "Enemy" nếu chưa tồn tại
+        CreateTag("Enemy");
+
+        // 1. Tạo thư mục chứa Prefabs nếu chưa có
+        if (!AssetDatabase.IsValidFolder("Assets/_Project/Prefabs"))
+            AssetDatabase.CreateFolder("Assets", "_Project/Prefabs");
+        if (!AssetDatabase.IsValidFolder("Assets/_Project/Prefabs/Potions"))
+            AssetDatabase.CreateFolder("Assets/_Project/Prefabs", "Potions");
+        if (!AssetDatabase.IsValidFolder("Assets/_Project/Prefabs/Enemies"))
+            AssetDatabase.CreateFolder("Assets/_Project/Prefabs", "Enemies");
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+
+        // 2. Tạo/Lấy Prefab các bình thuốc
+        GameObject healthPotion = GetOrCreatePotionPrefab(CollectibleType.HealthPotion, 
+            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionRed_00.png", "Collectible_HealthPotion");
+        GameObject manaPotion = GetOrCreatePotionPrefab(CollectibleType.ManaPotion, 
+            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionBlue_00.png", "Collectible_ManaPotion");
+        GameObject speedPotion = GetOrCreatePotionPrefab(CollectibleType.SpeedPotion, 
+            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionGold_00.png", "Collectible_SpeedPotion");
+
+        if (healthPotion == null || manaPotion == null || speedPotion == null)
+        {
+            EditorUtility.DisplayDialog("Lỗi", "Không tìm thấy hoặc không thể tạo các Prefab bình thuốc!", "OK");
+            return;
+        }
+
+        // 3. Quét và tạo 5 loại quái Enemy1 -> Enemy5
+        for (int i = 1; i <= 5; i++)
+        {
+            string folderPath = $"Assets/Hero and Opponents/Sprites/Enemy{i}";
+            if (!System.IO.Directory.Exists(folderPath))
+            {
+                Debug.LogWarning($"[Setup] Thư mục quái {folderPath} không tồn tại. Bỏ qua.");
+                continue;
+            }
+
+            // Quét tất cả file ảnh PNG trong thư mục quái
+            string[] files = System.IO.Directory.GetFiles(folderPath, "*.png");
+            if (files.Length == 0) continue;
+
+            // Đảm bảo Sprite PPU = 100, Point filter
+            foreach (string file in files)
+            {
+                TextureImporter importer = AssetImporter.GetAtPath(file) as TextureImporter;
+                if (importer != null)
+                {
+                    bool needsReimport = false;
+                    if (importer.spritePixelsPerUnit != 16f)
+                    {
+                        importer.spritePixelsPerUnit = 16f;
+                        needsReimport = true;
+                    }
+                    if (importer.filterMode != FilterMode.Point)
+                    {
+                        importer.filterMode = FilterMode.Point;
+                        needsReimport = true;
+                    }
+                    if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+                    {
+                        importer.textureCompression = TextureImporterCompression.Uncompressed;
+                        needsReimport = true;
+                    }
+                    if (needsReimport)
+                    {
+                        importer.SaveAndReimport();
+                    }
+                }
+            }
+
+            // Phân loại Sprites vào các hoạt ảnh
+            var idleList = new System.Collections.Generic.List<Sprite>();
+            var walkList = new System.Collections.Generic.List<Sprite>();
+            var attackAList = new System.Collections.Generic.List<Sprite>();
+            var attackBList = new System.Collections.Generic.List<Sprite>();
+            var hitList = new System.Collections.Generic.List<Sprite>();
+            var deadList = new System.Collections.Generic.List<Sprite>();
+            var jumpList = new System.Collections.Generic.List<Sprite>();
+
+            foreach (string file in files)
+            {
+                string filename = System.IO.Path.GetFileNameWithoutExtension(file).ToLower();
+                Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(file);
+                if (s == null) continue;
+
+                if (filename.StartsWith("idle"))
+                    idleList.Add(s);
+                else if (filename.StartsWith("walk"))
+                    walkList.Add(s);
+                else if (filename.StartsWith("attack-a") || filename.StartsWith("attack_a"))
+                    attackAList.Add(s);
+                else if (filename.StartsWith("attack-b") || filename.StartsWith("attack_b"))
+                    attackBList.Add(s);
+                else if (filename.StartsWith("hit"))
+                    hitList.Add(s);
+                else if (filename.StartsWith("dead"))
+                    deadList.Add(s);
+                else if (filename.StartsWith("jump"))
+                    jumpList.Add(s);
+            }
+
+            // Tạo GameObject tạm để dựng quái
+            string enemyName = $"Enemy_{i}";
+            GameObject tempEnemy = new GameObject(enemyName);
+            tempEnemy.tag = "Enemy";
+
+            SpriteRenderer sr = tempEnemy.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = 4;
+            if (idleList.Count > 0) sr.sprite = idleList[0];
+
+            Rigidbody2D rb = tempEnemy.AddComponent<Rigidbody2D>();
+            rb.bodyType = RigidbodyType2D.Dynamic;
+            rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+            BoxCollider2D boxCol = tempEnemy.AddComponent<BoxCollider2D>();
+            // Tự động tính toán kích thước collider theo tỷ lệ thực tế của Sprite
+            float spriteWidth = 1f;
+            float spriteHeight = 1.8f;
+            if (sr.sprite != null)
+            {
+                spriteWidth = (sr.sprite.rect.width / sr.sprite.pixelsPerUnit);
+                spriteHeight = (sr.sprite.rect.height / sr.sprite.pixelsPerUnit);
+            }
+            
+            // Lấy 70% bề ngang và 90% chiều cao để tạo collider vừa vặn
+            boxCol.size = new Vector2(spriteWidth * 0.7f, spriteHeight * 0.9f);
+            boxCol.offset = new Vector2(0f, spriteHeight * 0.45f);
+
+            // Thêm các Component mới tạo
+            EnemySpriteAnimator animator = tempEnemy.AddComponent<EnemySpriteAnimator>();
+            animator.idleSprites = idleList.ToArray();
+            animator.walkSprites = walkList.ToArray();
+            animator.attackASprites = attackAList.ToArray();
+            animator.attackBSprites = attackBList.ToArray();
+            animator.hitSprites = hitList.ToArray();
+            animator.deadSprites = deadList.ToArray();
+            animator.jumpSprites = jumpList.ToArray();
+            animator.fps = 10f;
+
+            EnemyStats stats = tempEnemy.AddComponent<EnemyStats>();
+            stats.healthPotionPrefab = healthPotion;
+            stats.manaPotionPrefab = manaPotion;
+            stats.speedPotionPrefab = speedPotion;
+            stats.dropProbability = 0.15f; // 15% rơi
+            stats.maxHealth = 50 + (i * 10); // Enemy5 trâu hơn Enemy1
+            stats.baseDamage = 10 + (i * 2);
+
+            EnemyAI ai = tempEnemy.AddComponent<EnemyAI>();
+            ai.moveSpeed = 1.8f + (i * 0.1f);
+            ai.patrolDistance = spriteWidth * 2.5f; // Tầm tuần tra tỷ lệ thuận với kích thước quái
+            ai.attackCooldown = 1.6f + (i * 0.1f);
+            ai.attackDamage = stats.baseDamage;
+            
+            // Thiết lập tầm đánh và đuổi bắt thích ứng với chiều rộng/cao của quái vật lớn
+            ai.attackRange = spriteWidth * 0.6f + 0.5f; 
+            ai.chaseRange = spriteHeight * 3.5f;
+
+            // Lưu thành Prefab
+            string enemyPrefabPath = $"Assets/_Project/Prefabs/Enemies/{enemyName}.prefab";
+            PrefabUtility.SaveAsPrefabAsset(tempEnemy, enemyPrefabPath);
+            Object.DestroyImmediate(tempEnemy);
+
+            // Gán lại tag trên prefab đã lưu để chắc chắn 100%
+            GameObject prefabObj = AssetDatabase.LoadAssetAtPath<GameObject>(enemyPrefabPath);
+            if (prefabObj != null)
+            {
+                prefabObj.tag = "Enemy";
+                EditorUtility.SetDirty(prefabObj);
+            }
+
+            Debug.Log($"[Setup] Đã tạo thành công Prefab quái: {enemyPrefabPath}");
+        }
+
+        // 4. Tìm các EnemySpawnNode trong Scene và gán ngẫu nhiên
+        EnemySpawnNode[] spawnNodes = Object.FindObjectsByType<EnemySpawnNode>(FindObjectsSortMode.None);
+        int assignedCount = 0;
+        if (spawnNodes.Length > 0)
+        {
+            for (int nodeIdx = 0; nodeIdx < spawnNodes.Length; nodeIdx++)
+            {
+                var node = spawnNodes[nodeIdx];
+                string randomEnemyPath = $"Assets/_Project/Prefabs/Enemies/Enemy_{Random.Range(1, 6)}.prefab";
+                GameObject enemyPref = AssetDatabase.LoadAssetAtPath<GameObject>(randomEnemyPath);
+                if (enemyPref != null)
+                {
+                    Undo.RecordObject(node, "Gán Enemy Prefab ngẫu nhiên");
+                    node.enemyPrefab = enemyPref;
+                    assignedCount++;
+                }
+            }
+            if (spawnNodes.Length > 0 && spawnNodes[0].gameObject.scene.IsValid())
+            {
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(spawnNodes[0].gameObject.scene);
+            }
+        }
+
+        // 5. Tìm tất cả các GameObject quái vật hiện có trong Scene và gán tag "Enemy"
+        GameObject[] allGo = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+        int taggedCount = 0;
+        foreach (var go in allGo)
+        {
+            if (go.name.StartsWith("Enemy_") || go.GetComponent<EnemyStats>() != null || go.GetComponent<EnemyAI>() != null)
+            {
+                Undo.RecordObject(go, "Gán Tag Enemy cho quái vật trong Scene");
+                go.tag = "Enemy";
+                taggedCount++;
+            }
+        }
+        if (taggedCount > 0)
+        {
+            Debug.Log($"[Setup] Đã gán tag 'Enemy' thành công cho {taggedCount} quái vật đang có trong Scene!");
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        EditorUtility.DisplayDialog("Thành công", 
+            $"Đã thiết lập hoàn chỉnh hệ thống Quái vật và Bình thuốc:\n\n" +
+            $"1. Tạo 3 Prefabs bình thuốc với PPU=16, Point Filter.\n" +
+            $"2. Tạo 5 Prefabs quái vật pixel với PPU=16 và hoạt ảnh Sprite-swapping tự động.\n" +
+            $"3. Cấu hình tỉ lệ rớt 15% tổng thể (chia đều 33.3% cho 3 loại bình thuốc).\n" +
+            $"4. Tự động gán Prefabs quái ngẫu nhiên cho {assignedCount} Spawn Nodes trong Scene!\n\n" +
+            $"Hãy nhấn Ctrl + S để lưu lại Scene.", "OK");
+    }
+
+    private static GameObject GetOrCreatePotionPrefab(CollectibleType type, string spritePath, string prefabName)
+    {
+        string localPath = $"Assets/_Project/Prefabs/Potions/{prefabName}.prefab";
+        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(localPath);
+        if (prefab != null) return prefab;
+
+        GameObject temp = new GameObject(prefabName);
+        SpriteRenderer sr = temp.AddComponent<SpriteRenderer>();
+        Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        if (s != null)
+        {
+            string path = AssetDatabase.GetAssetPath(s.texture);
+            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null && (importer.spritePixelsPerUnit != 16f || importer.filterMode != FilterMode.Point))
+            {
+                importer.spritePixelsPerUnit = 16f;
+                importer.filterMode = FilterMode.Point;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+        }
+        sr.sprite = s;
+        sr.sortingOrder = 5;
+        CircleCollider2D circleCol = temp.AddComponent<CircleCollider2D>();
+        circleCol.isTrigger = true;
+        circleCol.radius = 0.4f;
+        CollectibleItem item = temp.AddComponent<CollectibleItem>();
+        item.itemType = type;
+        item.amount = 1;
+        item.dropOnSpawn = true;
+
+        GameObject saved = PrefabUtility.SaveAsPrefabAsset(temp, localPath);
+        Object.DestroyImmediate(temp);
+        Debug.Log($"[Setup] Đã tạo Prefab Bình Thuốc: {localPath}");
+        return saved;
+    }
+
+    private static void CreateTag(string tag)
+    {
+        try
+        {
+            // Kiểm tra xem tag đã tồn tại trong Project Settings chưa
+            string[] existingTags = UnityEditorInternal.InternalEditorUtility.tags;
+            foreach (string t in existingTags)
+            {
+                if (t == tag) return;
+            }
+
+            // Dùng API của Unity để thêm Tag an toàn
+            UnityEditorInternal.InternalEditorUtility.AddTag(tag);
+            Debug.Log($"[Setup] Đã tự động tạo Tag: {tag}");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[Setup] Không thể tạo Tag '{tag}' tự động: {ex.Message}. Hãy tạo thủ công trong Project Settings nếu cần.");
+        }
+    }
 }

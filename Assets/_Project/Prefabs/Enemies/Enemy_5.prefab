@@ -1,0 +1,259 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3495178015694246998
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1308829429486732132}
+  - component: {fileID: 4212687293256539322}
+  - component: {fileID: 6702494561374001901}
+  - component: {fileID: 5050430285505909154}
+  - component: {fileID: 7446517256552059336}
+  - component: {fileID: 2387974354980988609}
+  - component: {fileID: 4924460448079769532}
+  m_Layer: 0
+  m_Name: Enemy_5
+  m_TagString: Enemy
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1308829429486732132
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &4212687293256539322
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 4
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 21300000, guid: eb3711790d9a7304992355d8f5f9eeae, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 8, y: 6}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
+--- !u!50 &6702494561374001901
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 1
+  m_Constraints: 4
+--- !u!61 &5050430285505909154
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 2.6999998}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 8, y: 6}
+    newSize: {x: 8, y: 6}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 5.6, y: 5.3999996}
+  m_EdgeRadius: 0
+--- !u!114 &7446517256552059336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd8bf3b66aa88344483058211c13823b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpriteAnimator
+  idleSprites:
+  - {fileID: 21300000, guid: eb3711790d9a7304992355d8f5f9eeae, type: 3}
+  - {fileID: 21300000, guid: c9625408524ce384f927cdec175e67b2, type: 3}
+  walkSprites: []
+  attackASprites:
+  - {fileID: 21300000, guid: 5b4b5bb559abd044791dedff1b79315e, type: 3}
+  - {fileID: 21300000, guid: 9351e6ac189df5a409a44e7b19fb1308, type: 3}
+  - {fileID: 21300000, guid: 41a89ec87611d144ba345dde9f14eb7f, type: 3}
+  - {fileID: 21300000, guid: 5582bd9b3b2d30041aa476896aca6576, type: 3}
+  - {fileID: 21300000, guid: ad356ffa6d5fb044faa7b7a6441a601b, type: 3}
+  - {fileID: 21300000, guid: bad448c2c13a09947a747764808348b7, type: 3}
+  attackBSprites:
+  - {fileID: 21300000, guid: 490d52efbafe6184d8ff89ef9677b3b8, type: 3}
+  - {fileID: 21300000, guid: ed9b567ed7c32dc4cbcac37af8841754, type: 3}
+  - {fileID: 21300000, guid: cf65ff94d9a87244587dbc101a5d0a21, type: 3}
+  - {fileID: 21300000, guid: e1fdf1a4ba6958647bcd945873ac6e65, type: 3}
+  - {fileID: 21300000, guid: 027906b99dfaf3841b34ff09f2de01af, type: 3}
+  - {fileID: 21300000, guid: 5106821bde0c0d5459d9016d6425abab, type: 3}
+  hitSprites:
+  - {fileID: 21300000, guid: 49a5f5035c8b8f34da87c470086f8a85, type: 3}
+  - {fileID: 21300000, guid: 66fe9a1423463254b858ecfc79605871, type: 3}
+  - {fileID: 21300000, guid: 9c40aa4b6471d854c88de8253331279a, type: 3}
+  - {fileID: 21300000, guid: b4306c055fa498742b39c712cbcd6caf, type: 3}
+  deadSprites:
+  - {fileID: 21300000, guid: e1c6bba8449913648a8ea6990d4a9060, type: 3}
+  - {fileID: 21300000, guid: 31f60db64b796164bb8fa35735e9a76f, type: 3}
+  - {fileID: 21300000, guid: 3d7e3a440047dce44be5a1a8789481a0, type: 3}
+  - {fileID: 21300000, guid: 2681b9ea165818a40a0d60507953ce71, type: 3}
+  jumpSprites:
+  - {fileID: 21300000, guid: cde6a51afd6aa9a408d1258d11671bd8, type: 3}
+  - {fileID: 21300000, guid: 3e943c1d00529284eb403cf58465cd2d, type: 3}
+  - {fileID: 21300000, guid: 6c4b72a04c613ee40a3d3ce5740fc370, type: 3}
+  - {fileID: 21300000, guid: 9fb7783f3be19e247a2166332029b4f1, type: 3}
+  - {fileID: 21300000, guid: ff8c22abfeb161146a5de37d00a1430d, type: 3}
+  - {fileID: 21300000, guid: 6bd35ac1b580ddd4e87246dcf0dc4eb5, type: 3}
+  fps: 10
+--- !u!114 &2387974354980988609
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41204f38ec325a24ab19d09b4226d9be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStats
+  maxHealth: 40
+  currentHealth: 0
+  baseDamage: 20
+  dropProbability: 0.15
+  healthPotionPrefab: {fileID: 6236248885502967272, guid: 65e0e549f3bbef644a3cefef5b8da290, type: 3}
+  manaPotionPrefab: {fileID: 1747327737350512287, guid: c125c1c6a2f4c4d47b3f4cac19b9f802, type: 3}
+  speedPotionPrefab: {fileID: 7161211418392324159, guid: 84d04d5d108d3d14bbb8cefd892730cc, type: 3}
+--- !u!114 &4924460448079769532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3495178015694246998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6c53698cc670f4488f6c5549393d560, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
+  moveSpeed: 2.3
+  chaseRange: 29.7
+  attackRange: 9.53
+  patrolDistance: 20
+  attackCooldown: 2.1000001
+  attackDamage: 20
+  isRanged: 1
+  projectilePrefab: {fileID: 0}
