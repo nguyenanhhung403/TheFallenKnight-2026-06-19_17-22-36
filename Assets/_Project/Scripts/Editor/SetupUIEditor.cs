@@ -133,6 +133,78 @@ public static class SetupUIEditor
             "Vui lòng nhấn Ctrl + S để lưu lại Scene.", "Tuyệt vời");
     }
 
+    [MenuItem("Tools/Spawn Test Collectibles")]
+    public static void SpawnTestCollectibles()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            player = GameObject.Find("Player");
+        }
+
+        if (player == null)
+        {
+            EditorUtility.DisplayDialog("Lỗi", "Không tìm thấy Player trong Scene để sinh vật phẩm thử nghiệm!", "OK");
+            return;
+        }
+
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+
+        Vector3 playerPos = player.transform.position;
+
+        // Sinh 3 bình thuốc ở vị trí x = +3f, +5f, +7f so với player
+        CreateCollectible(playerPos + Vector3.right * 3f + Vector3.up * 0.5f, CollectibleType.HealthPotion, 
+            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionRed_00.png", "Collectible_HealthPotion");
+
+        CreateCollectible(playerPos + Vector3.right * 5f + Vector3.up * 0.5f, CollectibleType.ManaPotion, 
+            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionBlue_00.png", "Collectible_ManaPotion");
+
+        CreateCollectible(playerPos + Vector3.right * 7f + Vector3.up * 0.5f, CollectibleType.SpeedPotion, 
+            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionGold_00.png", "Collectible_SpeedPotion");
+
+        // Đánh dấu Scene thay đổi để lưu
+        if (player.scene.IsValid())
+        {
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(player.scene);
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+
+        EditorUtility.DisplayDialog("Thành công", 
+            "Đã tạo thành công 3 bình thuốc thử nghiệm trên mặt đất (phía bên phải nhân vật):\n\n" +
+            "1. Bình Hồi Máu (Red Potion)\n" +
+            "2. Bình Hồi Mana (Blue Potion)\n" +
+            "3. Bình Tốc Độ (Gold Potion)\n\n" +
+            "Hãy nhấn Play và điều khiển nhân vật chạy qua để nhặt thử!", "Tuyệt vời");
+    }
+
+    private static void CreateCollectible(Vector3 position, CollectibleType type, string spritePath, string name)
+    {
+        GameObject obj = new GameObject(name);
+        obj.transform.position = position;
+
+        SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
+        sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        if (sr.sprite != null)
+        {
+            sr.sprite.texture.filterMode = FilterMode.Point;
+        }
+        sr.sortingOrder = 5; // Hiển thị trước map nền
+
+        // Tạo Trigger Collider
+        CircleCollider2D circleCol = obj.AddComponent<CircleCollider2D>();
+        circleCol.isTrigger = true;
+        circleCol.radius = 0.4f;
+
+        // Gán script CollectibleItem
+        CollectibleItem item = obj.AddComponent<CollectibleItem>();
+        item.itemType = type;
+        item.amount = 1;
+
+        Undo.RegisterCreatedObjectUndo(obj, "Tạo " + name);
+    }
+
     private static void ConfigureBarUI(GameObject barObj, bool isHealth)
     {
         // 1. Gỡ bỏ hoàn toàn nút trượt tròn trắng (Handle Slide Area) để tránh lỗi nạp Knob.psd

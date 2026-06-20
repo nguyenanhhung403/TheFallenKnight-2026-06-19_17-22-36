@@ -158,6 +158,24 @@ public class PotionSystem : MonoBehaviour
         Debug.Log($"[PotionSystem] Đã dùng 1 Bình Tốc Độ. Còn lại: {speedPotionCount}");
     }
 
+    public void AddHealthPotion(int amount = 1)
+    {
+        healthPotionCount += amount;
+        UpdateCountUI();
+    }
+
+    public void AddManaPotion(int amount = 1)
+    {
+        manaPotionCount += amount;
+        UpdateCountUI();
+    }
+
+    public void AddSpeedPotion(int amount = 1)
+    {
+        speedPotionCount += amount;
+        UpdateCountUI();
+    }
+
     private void StartSpeedBuff()
     {
         // Nếu đang có buff rồi thì reset lại thời gian buff
