@@ -12,7 +12,7 @@ public enum CollectibleType
 
 /// <summary>
 /// Gắn script này lên các vật phẩm nằm trong màn chơi để người chơi đi qua nhặt.
-/// Tích hợp hiệu ứng bay bổng (floating) và co giãn nhẹ (pulsing scale) cực kỳ sinh động.
+/// Hỗ trợ cả trạng thái đứng yên lơ lửng và hiệu ứng rơi nảy vật lý (bouncing loot drop) từ quái vật.
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
 public class CollectibleItem : MonoBehaviour
@@ -21,9 +21,14 @@ public class CollectibleItem : MonoBehaviour
     public CollectibleType itemType;
     public int amount = 1;
 
-    [Header("--- Hiệu ứng trôi nổi (Floating) ---")]
+    [Header("--- Vật phẩm rơi tự do (Loot Drop Physics) ---")]
+    [Tooltip("Nếu tích chọn, bình thuốc sẽ văng lên và rơi nảy trên mặt đất khi sinh ra (dùng khi quái chết).")]
+    public bool dropOnSpawn = true;
+    public float gravity = 18f;
+
+    [Header("--- Hiệu ứng trôi nổi sau khi tiếp đất (Floating) ---")]
     public float floatSpeed = 3f;
-    public float floatAmplitude = 0.15f;
+    public float floatAmplitude = 0.12f;
 
     [Header("--- Hiệu ứng Xoay 3D (Spinning Y) ---")]
     public float rotationSpeed = 150f;
@@ -36,12 +41,18 @@ public class CollectibleItem : MonoBehaviour
     private Vector3 baseScale;
     private bool isCollected = false;
 
+    // Các biến phụ trợ vật lý rơi tự do
+    private bool isDropping = false;
+    private Vector3 dropVelocity;
+    private float groundY;
+    private int bounceCount = 0;
+    private const int MAX_BOUNCES = 2;
+
     void Start()
     {
-        startPos = transform.position;
         baseScale = transform.localScale;
 
-        // Đảm bảo SpriteRenderer có thiết lập pixel art sắc nét
+        // Đảm bảo SpriteRenderer hiển thị pixel art sắc nét
         SpriteRenderer sr = GetComponent<SpriteRenderer>();
         if (sr != null && sr.sprite != null)
         {
@@ -60,29 +71,100 @@ public class CollectibleItem : MonoBehaviour
         {
             col.isTrigger = true;
         }
+
+        // Cấu hình vật lý rơi tự tạo khi quái rớt đồ
+        if (dropOnSpawn)
+        {
+            isDropping = true;
+            bounceCount = 0;
+
+            // Tạo lực văng ngẫu nhiên sang trái/phải và nhảy vọt lên cao
+            dropVelocity = new Vector3(Random.Range(-2.5f, 2.5f), Random.Range(5.5f, 7.5f), 0f);
+
+            // Tìm mặt đất bên dưới vật phẩm sử dụng LayerMask từ PlayerController
+            LayerMask groundMask = LayerMask.GetMask("Ground");
+            PlayerController pc = FindAnyObjectByType<PlayerController>();
+            if (pc != null)
+            {
+                groundMask = pc.groundLayer;
+            }
+
+            // Raycast từ vị trí hiện tại thẳng xuống dưới để xác định cao độ mặt đất
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 15f, groundMask);
+            if (hit.collider != null)
+            {
+                // Đặt điểm tiếp đất cao hơn mặt sàn một chút để bình thuốc chạm vừa vặn
+                groundY = hit.point.y + 0.35f; 
+            }
+            else
+            {
+                // Failsafe nếu không tìm thấy đất: tự động rơi xuống 1.5 đơn vị
+                groundY = transform.position.y - 1.5f;
+            }
+        }
+        else
+        {
+            startPos = transform.position;
+        }
     }
 
     void Update()
     {
         if (isCollected) return;
 
-        // 1. Hiệu ứng trôi nổi lên xuống mềm mại (Floating)
-        float newY = startPos.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
-        transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+        if (isDropping)
+        {
+            // 1. Cập nhật vị trí rơi tự do
+            transform.position += dropVelocity * Time.deltaTime;
+            dropVelocity.y -= gravity * Time.deltaTime;
 
-        // 2. Hiệu ứng nhịp tim co giãn nhẹ (Pulsing Scale)
-        float scaleOffset = Mathf.Sin(Time.time * scalePulseSpeed) * scalePulseAmplitude;
-        transform.localScale = baseScale * (1f + scaleOffset);
+            // Xoay tròn bình thuốc trên không trung theo hướng văng (xoay trục Z khi rơi)
+            transform.Rotate(Vector3.forward * -dropVelocity.x * 180f * Time.deltaTime);
 
-        // 3. Hiệu ứng xoay tròn 3D quanh trục Y (quay lật 360 độ)
-        transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
+            // 2. Xử lý chạm đất và nảy (Bounce)
+            if (transform.position.y <= groundY)
+            {
+                transform.position = new Vector3(transform.position.x, groundY, transform.position.z);
+
+                if (bounceCount < MAX_BOUNCES)
+                {
+                    // Đảo ngược lực rơi để nảy lên và giảm dần xung lực (dampen)
+                    dropVelocity.y = -dropVelocity.y * 0.35f;
+                    dropVelocity.x *= 0.5f; // Giảm tốc độ trượt ngang
+                    bounceCount++;
+                }
+                else
+                {
+                    // Dừng rơi, chuyển sang chế độ lơ lửng và xoay 3D
+                    isDropping = false;
+                    startPos = transform.position;
+                    
+                    // Reset góc quay về mặc định trước khi thực hiện xoay 3D Y-axis
+                    transform.rotation = Quaternion.identity;
+                }
+            }
+        }
+        else
+        {
+            // Trạng thái bình thường sau khi tiếp đất hoặc đặt sẵn trong Scene
+            // 1. Hiệu ứng trôi nổi lên xuống mềm mại (Floating)
+            float newY = startPos.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
+            transform.position = new Vector3(transform.position.x, newY, transform.position.z);
+
+            // 2. Hiệu ứng nhịp tim co giãn nhẹ (Pulsing Scale)
+            float scaleOffset = Mathf.Sin(Time.time * scalePulseSpeed) * scalePulseAmplitude;
+            transform.localScale = baseScale * (1f + scaleOffset);
+
+            // 3. Hiệu ứng xoay tròn 3D quanh trục Y
+            transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (isCollected) return;
 
-        // Kiểm tra xem đối tượng va chạm có phải là Player không
+        // Kiểm tra va chạm với Player
         if (other.CompareTag("Player") || other.name.ToLower().Contains("player"))
         {
             PotionSystem potionSystem = other.GetComponent<PotionSystem>();
@@ -90,7 +172,6 @@ public class CollectibleItem : MonoBehaviour
             {
                 isCollected = true;
                 
-                // Gán màu hiệu ứng tương ứng với loại bình thuốc nhặt được
                 Color effectColor = Color.white;
                 switch (itemType)
                 {
@@ -100,7 +181,7 @@ public class CollectibleItem : MonoBehaviour
                         break;
                     case CollectibleType.ManaPotion:
                         potionSystem.AddManaPotion(amount);
-                        effectColor = new Color(0f, 0.7f, 1f, 0.9f);  // Xanh dương/cyan
+                        effectColor = new Color(0f, 0.7f, 1f, 0.9f);  // Xanh dương
                         break;
                     case CollectibleType.SpeedPotion:
                         potionSystem.AddSpeedPotion(amount);
@@ -108,16 +189,15 @@ public class CollectibleItem : MonoBehaviour
                         break;
                 }
 
-                // Phát hiệu ứng hào quang xoáy màu tương ứng quanh người chơi khi nhặt được
+                // Phát hiệu ứng vòng xoáy hào quang màu sắc xung quanh người chơi
                 PlayerController pc = other.GetComponent<PlayerController>();
                 if (pc != null)
                 {
                     pc.SpawnAuraEffect(effectColor, 20);
                 }
 
-                Debug.Log($"[CollectibleItem] Người chơi đã nhặt {itemType} (+{amount})");
+                Debug.Log($"[CollectibleItem] Đã nhặt {itemType} (+{amount})");
                 
-                // Tự hủy vật phẩm sau khi nhặt
                 Destroy(gameObject);
             }
         }
