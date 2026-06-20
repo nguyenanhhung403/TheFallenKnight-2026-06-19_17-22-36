@@ -41,6 +41,20 @@ public static class SetupUIEditor
             Debug.Log("[Setup] Đã tự động thêm Component PlayerController vào Player.");
         }
 
+        // Đảm bảo có PotionSystem và gán Sprites bình thuốc từ 2D Pixel Item Pack
+        PotionSystem potionSys = player.GetComponent<PotionSystem>();
+        if (potionSys == null)
+        {
+            potionSys = player.AddComponent<PotionSystem>();
+            Undo.RegisterCreatedObjectUndo(potionSys, "Thêm PotionSystem");
+            Debug.Log("[Setup] Đã tự động thêm Component PotionSystem vào Player.");
+        }
+
+        Undo.RecordObject(potionSys, "Gán Sprites Potion");
+        potionSys.healthPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionRed_00.png");
+        potionSys.manaPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionBlue_00.png");
+        potionSys.speedPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionGold_00.png");
+
         // ------------------ 2. THIẾT LẬP CANVAS & UI ------------------
         Canvas canvas = Object.FindAnyObjectByType<Canvas>();
         if (canvas == null)
