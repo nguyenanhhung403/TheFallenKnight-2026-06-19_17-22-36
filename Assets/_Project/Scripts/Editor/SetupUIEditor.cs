@@ -185,11 +185,23 @@ public static class SetupUIEditor
         obj.transform.position = position;
 
         SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
-        sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
-        if (sr.sprite != null)
+        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+
+        // Thiết lập PPU của Sprite sang 16 để hiển thị to rõ nét trong màn chơi 2D Pixel Art
+        if (sprite != null)
         {
-            sr.sprite.texture.filterMode = FilterMode.Point;
+            string assetPath = AssetDatabase.GetAssetPath(sprite.texture);
+            TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer != null && (importer.spritePixelsPerUnit != 16f || importer.filterMode != FilterMode.Point))
+            {
+                importer.spritePixelsPerUnit = 16f;
+                importer.filterMode = FilterMode.Point;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
         }
+
+        sr.sprite = sprite;
         sr.sortingOrder = 5; // Hiển thị trước map nền
 
         // Tạo Trigger Collider
