@@ -1198,8 +1198,20 @@ public static class SetupUIEditor
 
         // ------------------ 4. UPDATE BUILD SETTINGS ------------------
         var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
-        buildScenes.Add(new EditorBuildSettingsScene(targetMenuScenePath, true));
-        buildScenes.Add(new EditorBuildSettingsScene(originalScenePath, true));
+        string mainMenuScenePath = "Assets/_Project/Scenes/MainMenuScene.unity";
+        string gameplayScenePath = "Assets/Scenes/SampleScene.unity";
+
+        buildScenes.Add(new EditorBuildSettingsScene(mainMenuScenePath, true));
+        buildScenes.Add(new EditorBuildSettingsScene(gameplayScenePath, true));
+
+        // Thêm scene gốc nếu khác hai scene trên
+        if (!string.IsNullOrEmpty(originalScenePath) && 
+            originalScenePath != mainMenuScenePath && 
+            originalScenePath != gameplayScenePath)
+        {
+            buildScenes.Add(new EditorBuildSettingsScene(originalScenePath, true));
+        }
+
         EditorBuildSettings.scenes = buildScenes.ToArray();
 
         // ------------------ 5. RETURN TO ORIGINAL GAMEPLAY SCENE ------------------
