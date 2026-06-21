@@ -1663,4 +1663,173 @@ public static class SetupUIEditor
         }
         return null;
     }
+
+    [MenuItem("Tools/Create Undead Executioner Boss")]
+    public static void CreateUndeadExecutionerBoss()
+    {
+        string bossFolder = "Assets/Undead executioner/Undead executioner puppet/png/";
+        string[] animFiles = new string[]
+        {
+            "idle.png",
+            "idle2.png",
+            "attacking.png",
+            "skill1.png",
+            "death.png",
+            "summon.png",
+            "summonAppear.png",
+            "summonDeath.png",
+            "summonIdle.png"
+        };
+
+        // 1. Đồng bộ PPU = 16 và Point Filter cho toàn bộ file ảnh của Boss
+        foreach (string file in animFiles)
+        {
+            string fullPath = bossFolder + file;
+            TextureImporter importer = AssetImporter.GetAtPath(fullPath) as TextureImporter;
+            if (importer != null)
+            {
+                bool changed = false;
+                if (importer.spritePixelsToUnits != 16)
+                {
+                    importer.spritePixelsToUnits = 16;
+                    changed = true;
+                }
+                if (importer.filterMode != FilterMode.Point)
+                {
+                    importer.filterMode = FilterMode.Point;
+                    changed = true;
+                }
+                if (changed)
+                {
+                    importer.SaveAndReimport();
+                }
+            }
+        }
+
+        // 2. Load các Sprite tương ứng
+        Sprite[] idle = LoadAllSpritesFromSheet(bossFolder + "idle.png");
+        Sprite[] walk = LoadAllSpritesFromSheet(bossFolder + "idle2.png"); // Dùng idle2 làm hoạt ảnh đi tuần tra
+        Sprite[] attackA = LoadAllSpritesFromSheet(bossFolder + "attacking.png");
+        Sprite[] attackB = LoadAllSpritesFromSheet(bossFolder + "skill1.png"); // Chiêu chém skill
+        Sprite[] dead = LoadAllSpritesFromSheet(bossFolder + "death.png");
+
+        if (idle.Length == 0 || dead.Length == 0 || attackA.Length == 0)
+        {
+            EditorUtility.DisplayDialog("Lỗi", "Không tìm thấy các sprite của Undead Executioner. Vui lòng kiểm tra lại đường dẫn Assets/Undead executioner/Undead executioner puppet/png/", "OK");
+            return;
+        }
+
+        // 3. Tạo GameObject Boss
+        GameObject bossObj = new GameObject("Boss_UndeadExecutioner");
+        bossObj.tag = "Enemy";
+        bossObj.transform.position = Vector3.zero;
+
+        // 4. Cấu hình SpriteRenderer
+        SpriteRenderer sr = bossObj.AddComponent<SpriteRenderer>();
+        sr.sprite = idle[0];
+        sr.sortingOrder = 4; // Vẽ ngang hàng với quái vật khác
+
+        // Gán Lit Material nếu có
+        Material litMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/_Project/Tilemaps/Sprite-Lit-Default-Shared.mat");
+        if (litMaterial != null)
+        {
+            sr.sharedMaterial = litMaterial;
+        }
+
+        // 5. Cấu hình Rigidbody2D
+        Rigidbody2D rb = bossObj.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        // 6. Cấu hình CapsuleCollider2D (phù hợp với hình dáng boss to cao)
+        CapsuleCollider2D col = bossObj.AddComponent<CapsuleCollider2D>();
+        col.direction = CapsuleDirection2D.Vertical;
+        // Boss Undead Executioner cao 64 pixel, rộng khoảng 47 pixel ở PPU 16.
+        // Quy đổi ra unit: cao 4.0, rộng 2.93. Ta chỉnh size collider nhỏ hơn chút để di chuyển mượt mà.
+        col.size = new Vector2(1.5f, 3.2f);
+        col.offset = new Vector2(0f, 0f);
+
+        // 7. Cấu hình EnemySpriteAnimator
+        EnemySpriteAnimator animator = bossObj.AddComponent<EnemySpriteAnimator>();
+        animator.idleSprites = idle;
+        animator.walkSprites = walk;
+        animator.attackASprites = attackA;
+        animator.attackBSprites = attackB;
+        animator.deadSprites = dead;
+        // Hit và Jump dùng tạm Idle
+        animator.hitSprites = new Sprite[] { idle[0], idle[1] };
+        animator.jumpSprites = idle;
+        animator.fps = 10f;
+
+        // 8. Cấu hình EnemyStats
+        EnemyStats stats = bossObj.AddComponent<EnemyStats>();
+        // Sát thương & máu của quái thường là 60 HP. Boss máu trâu gấp 5 lần = 300 HP.
+        stats.maxHealth = 300;
+        stats.baseDamage = 25; // Boss chém đau hơn (25 thay vì 12)
+        stats.dropProbability = 0.5f; // Tỉ lệ rớt bình potion cao hơn (50%) khi diệt Boss!
+
+        // 9. Cấu hình EnemyAI
+        EnemyAI ai = bossObj.AddComponent<EnemyAI>();
+        ai.moveSpeed = 2.2f;      // Tốc độ di chuyển vừa phải
+        ai.chaseRange = 12f;      // Phát hiện từ xa
+        ai.attackRange = 2.2f;    // Tầm đánh rộng (do có thanh đao Executioner cực lớn)
+        ai.attackCooldown = 2.2f; // Cooldown lâu hơn chút nhưng sát thương to
+        ai.attackDamage = 25;
+        ai.isRanged = false;      // Boss cận chiến chém đao cực uy lực
+
+        // Đăng ký Undo và chọn đối tượng mới tạo trong Hierarchy
+        Undo.RegisterCreatedObjectUndo(bossObj, "Tạo Boss Undead Executioner");
+        Selection.activeGameObject = bossObj;
+
+        EditorUtility.DisplayDialog("Thành công", 
+            "Đã tạo thành công Boss Undead Executioner trong Hierarchy!\n\n" +
+            "1. Tự động đồng bộ toàn bộ file sprite sheets về PPU = 16 và Point Filter.\n" +
+            "2. Đã tự động cắt và gán tất cả Sprite từ file gốc (Idle, Idle2 làm Walk, Attacking, Skill1, Death).\n" +
+            "3. Máu boss được tăng gấp 5 lần (300 HP) và sát thương là 25.\n" +
+            "4. Đã gắn Collider dạng Capsule tối ưu hóa cho boss to cao.\n\n" +
+            "Gợi ý: Hãy đặt Boss ở khu vực cuối của màn chơi để làm Boss cuối của game!", "Tuyệt vời");
+    }
+
+    private static Sprite[] LoadAllSpritesFromSheet(string path)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        List<Sprite> sprites = new List<Sprite>();
+        foreach (Object asset in assets)
+        {
+            if (asset is Sprite s)
+            {
+                sprites.Add(s);
+            }
+        }
+        
+        // Sắp xếp các sprite theo thứ tự abc trong tên (ví dụ: idle_0, idle_1...)
+        sprites.Sort((a, b) => {
+            return ExtractNumber(a.name).CompareTo(ExtractNumber(b.name));
+        });
+        
+        return sprites.ToArray();
+    }
+
+    private static int ExtractNumber(string name)
+    {
+        string numberStr = "";
+        for (int i = name.Length - 1; i >= 0; i--)
+        {
+            if (char.IsDigit(name[i]))
+            {
+                numberStr = name[i] + numberStr;
+            }
+            else
+            {
+                if (numberStr.Length > 0) break;
+            }
+        }
+        int result;
+        if (int.TryParse(numberStr, out result))
+        {
+            return result;
+        }
+        return 0;
+    }
 }
