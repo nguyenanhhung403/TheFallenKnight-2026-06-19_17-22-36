@@ -31,6 +31,8 @@ public class GameOverController : MonoBehaviour
 
     public void RestartGame()
     {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
+        AudioManager.Instance.PlayBGM();
         Time.timeScale = 1f;
         Debug.Log("[GameOver] Chơi lại màn chơi...");
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -38,6 +40,8 @@ public class GameOverController : MonoBehaviour
 
     public void LoadMainMenu()
     {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
+        AudioManager.Instance.PlayBGM();
         Time.timeScale = 1f;
         Debug.Log("[GameOver] Quay lại Main Menu...");
         SceneManager.LoadScene("MainMenuScene");

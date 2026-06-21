@@ -50,6 +50,19 @@ public class ManaBarUI : MonoBehaviour
         }
     }
 
+    private Font FindCustomFontAtRuntime()
+    {
+        Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
+        foreach (Font f in fonts)
+        {
+            if (f != null && f.name != "Arial" && f.name != "LegacyRuntime" && !f.name.StartsWith("Liberation"))
+            {
+                return f;
+            }
+        }
+        return null;
+    }
+
     private void SetupMPText()
     {
         // Tạo GameObject Text
@@ -57,7 +70,8 @@ public class ManaBarUI : MonoBehaviour
         textObj.transform.SetParent(manaSlider.transform, false);
 
         mpText = textObj.AddComponent<Text>();
-        mpText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); // Font chuẩn có sẵn
+        Font customFont = FindCustomFontAtRuntime();
+        mpText.font = customFont != null ? customFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); // Font chuẩn có sẵn
         mpText.fontSize = 14;
         mpText.fontStyle = FontStyle.Bold;
         mpText.color = Color.white;

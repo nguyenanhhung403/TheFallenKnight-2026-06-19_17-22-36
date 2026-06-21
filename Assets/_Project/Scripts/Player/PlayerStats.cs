@@ -54,6 +54,11 @@ public class PlayerStats : MonoBehaviour
         currentHP -= amount;
         currentHP = Mathf.Max(currentHP, 0);
 
+        if (currentHP > 0)
+        {
+            AudioManager.Instance.PlaySFX(SoundEffect.Hurt);
+        }
+
         // Kích hoạt animation bị thương
         pc?.TakeDamage();
 

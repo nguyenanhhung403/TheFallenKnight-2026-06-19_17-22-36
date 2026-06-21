@@ -106,8 +106,16 @@ public class EnemyStats : MonoBehaviour
         // Xử lý tỉ lệ rơi Potion
         HandleLootDrop();
 
-        // Cho quái tan biến dần sau khi hoạt ảnh ngã kết thúc
-        StartCoroutine(FadeAndDestroy());
+        string lowerName = gameObject.name.ToLower();
+        if (gameObject.name.Contains("Boss_UndeadExecutioner") || lowerName.Contains("boss") || lowerName.Contains("executioner"))
+        {
+            StartCoroutine(DelayBossDefeatedChoice());
+        }
+        else
+        {
+            // Cho quái tan biến dần sau khi hoạt ảnh ngã kết thúc
+            StartCoroutine(FadeAndDestroy());
+        }
     }
 
     private void HandleLootDrop()
@@ -215,4 +223,53 @@ public class EnemyStats : MonoBehaviour
         }
     }
 #endif
+
+    private System.Collections.IEnumerator DelayBossDefeatedChoice()
+    {
+        yield return new WaitForSeconds(1.5f);
+
+        // Phát âm thanh tiêu diệt Boss và dừng BGM
+        AudioManager.Instance.StopBGM();
+        AudioManager.Instance.PlaySFX(SoundEffect.BossDefeated);
+
+        GameObject bdPanel = null;
+
+        // 1. Tìm thông qua tất cả Canvas
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var c in canvases)
+        {
+            Transform tr = c.transform.Find("BossDefeatedPanel");
+            if (tr != null)
+            {
+                bdPanel = tr.gameObject;
+                break;
+            }
+        }
+
+        // 2. Nếu vẫn không thấy, quét toàn bộ GameObject trong Scene (bao gồm cả ẩn)
+        if (bdPanel == null)
+        {
+            GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            foreach (var go in allObjects)
+            {
+                if (go.name == "BossDefeatedPanel" && go.scene.isLoaded)
+                {
+                    bdPanel = go;
+                    break;
+                }
+            }
+        }
+
+        if (bdPanel != null)
+        {
+            bdPanel.SetActive(true);
+            Time.timeScale = 0f;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            yield break;
+        }
+
+        Debug.LogWarning("[EnemyStats] Không tìm thấy BossDefeatedPanel trong Scene, quay lại Main Menu...");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
+    }
 }

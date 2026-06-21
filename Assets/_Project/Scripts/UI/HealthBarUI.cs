@@ -82,6 +82,19 @@ public class HealthBarUI : MonoBehaviour
         }
     }
 
+    private Font FindCustomFontAtRuntime()
+    {
+        Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
+        foreach (Font f in fonts)
+        {
+            if (f != null && f.name != "Arial" && f.name != "LegacyRuntime" && !f.name.StartsWith("Liberation"))
+            {
+                return f;
+            }
+        }
+        return null;
+    }
+
     private void SetupHPText()
     {
         // Tạo GameObject Text
@@ -89,7 +102,8 @@ public class HealthBarUI : MonoBehaviour
         textObj.transform.SetParent(healthSlider.transform, false);
 
         hpText = textObj.AddComponent<Text>();
-        hpText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); // Font chuẩn có sẵn
+        Font customFont = FindCustomFontAtRuntime();
+        hpText.font = customFont != null ? customFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); // Font chuẩn có sẵn
         hpText.fontSize = 16;
         hpText.fontStyle = FontStyle.Bold;
         hpText.color = Color.white;

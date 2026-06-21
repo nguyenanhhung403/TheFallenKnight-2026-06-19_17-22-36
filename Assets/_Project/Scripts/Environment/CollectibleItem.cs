@@ -172,6 +172,9 @@ public class CollectibleItem : MonoBehaviour
             {
                 isCollected = true;
                 
+                // Phát âm thanh nhặt bình thuốc
+                AudioManager.Instance.PlaySFX(SoundEffect.CollectPotion);
+
                 Color effectColor = Color.white;
                 switch (itemType)
                 {

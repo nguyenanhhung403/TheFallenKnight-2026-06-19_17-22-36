@@ -176,6 +176,7 @@ public class PlayerController : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             anim.SetTrigger("Jump"); // Kích hoạt animation Nhảy
+            AudioManager.Instance.PlaySFX(SoundEffect.Jump);
         }
     }
 
@@ -197,6 +198,7 @@ public class PlayerController : MonoBehaviour
                 lastAttackTime = Time.time;
                 anim.ResetTrigger("RunAttack"); // Reset trước để tránh queue
                 anim.SetTrigger("RunAttack");
+                AudioManager.Instance.PlaySFX(SoundEffect.Attack);
                 StartCoroutine(DealMeleeDamageDelay(0.25f, Mathf.RoundToInt(damage * 1.1f), false, true));
                 return;
             }
@@ -209,6 +211,7 @@ public class PlayerController : MonoBehaviour
             lastAttackTime = Time.time;
             anim.ResetTrigger("Attack1"); // Reset trước để tránh queue
             anim.SetTrigger("Attack1");
+            AudioManager.Instance.PlaySFX(SoundEffect.Attack);
             StartCoroutine(DealMeleeDamageDelay(0.2f, damage, false, false));
         }
 
@@ -219,6 +222,7 @@ public class PlayerController : MonoBehaviour
             lastAttackTime = Time.time;
             anim.ResetTrigger("Attack2"); // Reset trước để tránh queue
             anim.SetTrigger("Attack2");
+            AudioManager.Instance.PlaySFX(SoundEffect.Attack);
             StartCoroutine(DealMeleeDamageDelay(0.3f, Mathf.RoundToInt(damage * 1.25f), true, false));
         }
     }
@@ -244,30 +248,24 @@ public class PlayerController : MonoBehaviour
         KeyCode key = (fireballKey == KeyCode.None) ? KeyCode.F : fireballKey;
         if (Input.GetKeyDown(key))
         {
-            Debug.Log($"[Fireball Input] Phím {key} được bấm! isAttacking={isAttacking}, isDefending={isDefending}, isGrounded={isGrounded}, cooldown={(Time.time - lastFireballTime >= fireballCooldown)}");
-            
             if (isDefending)
             {
-                Debug.LogWarning("[Fireball Input] Bị chặn: Nhân vật đang phòng thủ!");
                 return;
             }
 
             if (Time.time - lastFireballTime < fireballCooldown)
             {
-                Debug.LogWarning("[Fireball Input] Bị chặn: Kỹ năng đang hồi chiêu!");
                 return;
             }
 
             PlayerStats stats = GetComponent<PlayerStats>();
             if (stats == null)
             {
-                Debug.LogError("[Fireball Input] Bị chặn: Không tìm thấy Component PlayerStats trên Player!");
                 return;
             }
 
             if (stats.currentMP < fireballManaCost)
             {
-                Debug.LogWarning($"[Fireball Input] Bị chặn: Không đủ Mana! Cần {fireballManaCost}, hiện có {stats.currentMP}");
                 return;
             }
 
@@ -280,6 +278,7 @@ public class PlayerController : MonoBehaviour
                 // Kích hoạt animation xuất chiêu (Sử dụng trigger Attack2 để vung kiếm chém lửa ra)
                 anim.ResetTrigger("Attack2");
                 anim.SetTrigger("Attack2");
+                AudioManager.Instance.PlaySFX(SoundEffect.Attack);
 
                 // Tính toán điểm xuất phát của cầu lửa
                 Vector3 spawnOffset = new Vector3(isFacingRight ? 0.8f : -0.8f, 0.2f, 0f);
@@ -413,6 +412,10 @@ public class PlayerController : MonoBehaviour
         
         rb.linearVelocity = Vector2.zero; // Dừng mọi chuyển động
         anim.SetTrigger("Dead"); // Kích hoạt animation chết
+
+        // Dừng nhạc nền và phát nhạc Game Over
+        AudioManager.Instance.StopBGM();
+        AudioManager.Instance.PlaySFX(SoundEffect.GameOver);
 
         // Đóng băng Animator ở khung hình cuối sau 0.8 giây để tránh lặp anim chết (nếu clip bị bật Loop Time)
         StartCoroutine(FreezeAnimatorAfterDelay(0.8f));
@@ -583,50 +586,35 @@ public class PlayerController : MonoBehaviour
 
     private void HandleDebugInputs()
     {
-        // 1. Phím H: Gây 20 sát thương
-        if (Input.GetKeyDown(KeyCode.H))
+        // Phím P: Siêu Hack Game (Hồi đầy HP, đầy MP, nhận 99 bình thuốc các loại, và cộng thêm 500 Sát thương!)
+        if (Input.GetKeyDown(KeyCode.P))
         {
             PlayerStats stats = GetComponent<PlayerStats>();
             if (stats != null)
             {
-                stats.TakeDamage(20);
-                Debug.Log("[Debug Input] Bấm H -> Nhận 20 sát thương!");
-            }
-        }
+                stats.Heal(stats.maxHP);
+                stats.RestoreMana(stats.maxMP);
+                stats.bonusDamage += 500;
+                
+                // Cấp 99 bình thuốc các loại
+                PotionSystem potionSys = GetComponent<PotionSystem>();
+                if (potionSys != null)
+                {
+                    potionSys.healthPotionCount = 99;
+                    potionSys.manaPotionCount = 99;
+                    potionSys.speedPotionCount = 99;
+                }
 
-        // 2. Phím G: Hồi 20 HP + Hiệu ứng hào quang xanh lá
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            PlayerStats stats = GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                stats.Heal(20);
-                
-                // Nháy sprite màu xanh lá
+                // Nháy sprite màu vàng rực rỡ
                 if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-                flashCoroutine = StartCoroutine(FlashColorEffect(new Color(0.2f, 1f, 0.2f, 1f), 0.25f));
-                
-                // Hiệu ứng vòng xoáy xanh lá
-                SpawnAuraEffect(new Color(0.2f, 1f, 0.2f, 0.8f), 30);
-                Debug.Log("[Debug Input] Bấm G -> Hồi 20 HP!");
-            }
-        }
+                flashCoroutine = StartCoroutine(FlashColorEffect(new Color(1f, 0.85f, 0f, 1f), 0.5f));
 
-        // 3. Phím B: Hồi 20 MP + Hiệu ứng hào quang xanh dương/cyan
-        if (Input.GetKeyDown(KeyCode.B))
-        {
-            PlayerStats stats = GetComponent<PlayerStats>();
-            if (stats != null)
-            {
-                stats.RestoreMana(20);
-                
-                // Nháy sprite màu xanh dương/cyan
-                if (flashCoroutine != null) StopCoroutine(flashCoroutine);
-                flashCoroutine = StartCoroutine(FlashColorEffect(new Color(0f, 0.7f, 1f, 1f), 0.25f));
-                
-                // Hiệu ứng vòng xoáy xanh dương/cyan
-                SpawnAuraEffect(new Color(0f, 0.8f, 1f, 0.8f), 30);
-                Debug.Log("[Debug Input] Bấm B -> Hồi 20 Mana!");
+                // Hiệu ứng vòng xoáy hào quang lấp lánh
+                SpawnAuraEffect(new Color(1f, 0.85f, 0f, 0.9f), 50);
+
+                // Phát âm thanh chiến thắng
+                AudioManager.Instance.PlaySFX(SoundEffect.BossDefeated);
+                Debug.Log("[Cheat Mode] Đã kích hoạt Hack (Phím P): Đầy HP/MP, 99 Bình thuốc, +500 Sát thương!");
             }
         }
     }

@@ -580,14 +580,11 @@ public static class SetupUIEditor
     {
         try
         {
-            // Kiểm tra xem tag đã tồn tại trong Project Settings chưa
             string[] existingTags = UnityEditorInternal.InternalEditorUtility.tags;
             foreach (string t in existingTags)
             {
                 if (t == tag) return;
             }
-
-            // Dùng API của Unity để thêm Tag an toàn
             UnityEditorInternal.InternalEditorUtility.AddTag(tag);
             Debug.Log($"[Setup] Đã tự động tạo Tag: {tag}");
         }
@@ -597,154 +594,261 @@ public static class SetupUIEditor
         }
     }
 
+    private static Font FindCustomFont()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:Font");
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (path.StartsWith("Assets/"))
+            {
+                Font font = AssetDatabase.LoadAssetAtPath<Font>(path);
+                if (font != null) return font;
+            }
+        }
+        return null;
+    }
+
     [MenuItem("Tools/Setup Menus (Dark Fantasy)")]
     public static void SetupMenus()
     {
         // ------------------ 1. CONFIG SPRITES ------------------
         string menuBgPath = "Assets/_Project/Sprites/UI/dark_fantasy_menu_bg.png";
         string gameoverBgPath = "Assets/_Project/Sprites/UI/dark_fantasy_gameover_bg.png";
+        string bossDefeatedBgPath = "Assets/_Project/Sprites/UI/boss_defeated_choice_bg.png";
+
         ConfigureSpriteImporter(menuBgPath);
         ConfigureSpriteImporter(gameoverBgPath);
+        ConfigureSpriteImporter(bossDefeatedBgPath);
 
-        // Lưu scene hiện tại
+        Sprite menuBg = AssetDatabase.LoadAssetAtPath<Sprite>(menuBgPath);
+        Sprite gameoverBg = AssetDatabase.LoadAssetAtPath<Sprite>(gameoverBgPath);
+        Sprite bossDefeatedBg = AssetDatabase.LoadAssetAtPath<Sprite>(bossDefeatedBgPath);
+
+        Font pixelFont = FindCustomFont();
+        if (pixelFont == null) pixelFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        // ------------------ 2. SETUP GAMEPLAY SCENE (Pause & Game Over) ------------------
         string originalScenePath = EditorSceneManager.GetActiveScene().path;
         if (string.IsNullOrEmpty(originalScenePath))
         {
             originalScenePath = "Assets/Scenes/SampleScene.unity";
         }
-        EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
 
-        // ------------------ 2. SETUP GAMEPLAY SCENE UI (PAUSE & GAME OVER) ------------------
-        // Đảm bảo đang mở Gameplay Scene
-        if (EditorSceneManager.GetActiveScene().path != originalScenePath)
+        // Tạo Canvas trong Gameplay Scene nếu chưa có
+        Canvas gameplayCanvas = Object.FindAnyObjectByType<Canvas>();
+        if (gameplayCanvas == null)
         {
-            EditorSceneManager.OpenScene(originalScenePath);
-        }
-
-        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject canvasObj = new GameObject("Canvas");
-            canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            GameObject canvasObj = new GameObject("GameplayCanvas");
+            gameplayCanvas = canvasObj.AddComponent<Canvas>();
+            gameplayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasObj.AddComponent<CanvasScaler>();
             canvasObj.AddComponent<GraphicRaycaster>();
-            Undo.RegisterCreatedObjectUndo(canvasObj, "Tạo Canvas mới");
+            Undo.RegisterCreatedObjectUndo(canvasObj, "Tạo Gameplay Canvas");
         }
 
-        Transform canvasTransform = canvas.transform;
-
-        // --- SETUP PAUSE MENU ---
-        Transform oldPause = canvasTransform.Find("PauseMenuPanel");
-        if (oldPause != null) Undo.DestroyObjectImmediate(oldPause.gameObject);
+        // Tạo hoặc cấu hình PauseMenuPanel
+        Transform existingPause = gameplayCanvas.transform.Find("PauseMenuPanel");
+        if (existingPause != null)
+        {
+            Undo.DestroyObjectImmediate(existingPause.gameObject);
+        }
 
         GameObject pausePanelObj = new GameObject("PauseMenuPanel");
-        pausePanelObj.transform.SetParent(canvasTransform, false);
+        pausePanelObj.transform.SetParent(gameplayCanvas.transform, false);
         RectTransform pauseRect = pausePanelObj.AddComponent<RectTransform>();
-        pauseRect.sizeDelta = new Vector2(600, 500);
+        pauseRect.anchorMin = Vector2.zero;
+        pauseRect.anchorMax = Vector2.one;
+        pauseRect.sizeDelta = Vector2.zero;
         pauseRect.anchoredPosition = Vector2.zero;
 
-        Image pauseImg = pausePanelObj.AddComponent<Image>();
-        pauseImg.color = new Color(0.05f, 0.05f, 0.05f, 0.92f); // Màu tối âm u
-        
+        Image pauseBg = pausePanelObj.AddComponent<Image>();
+        pauseBg.color = new Color(0f, 0f, 0f, 0.85f); // Đen mờ u ám
+
         Outline pauseOutline = pausePanelObj.AddComponent<Outline>();
-        pauseOutline.effectColor = new Color(0.5f, 0.1f, 0.1f, 0.7f); // Viền đỏ máu
+        pauseOutline.effectColor = new Color(0.4f, 0.05f, 0.05f, 0.5f); // Viền đỏ máu nhạt
         pauseOutline.effectDistance = new Vector2(3, -3);
 
-        PauseMenuController pauseCtrl = canvas.gameObject.GetComponent<PauseMenuController>();
-        if (pauseCtrl == null) pauseCtrl = canvas.gameObject.AddComponent<PauseMenuController>();
-        pauseCtrl.pausePanel = pausePanelObj;
+        // Nút bấm UI thiết kế Dark Gothic
+        Color btnNormalColor = new Color(0.12f, 0.12f, 0.12f, 0.95f);
+        Color btnHoverColor = new Color(0.35f, 0.05f, 0.05f, 1f); // Đỏ thẫm khi hover
 
-        // Title Pause
-        GameObject pauseTitleObj = new GameObject("Title");
+        // Pause Title
+        GameObject pauseTitleObj = new GameObject("PauseTitle");
         pauseTitleObj.transform.SetParent(pausePanelObj.transform, false);
         RectTransform pauseTitleRect = pauseTitleObj.AddComponent<RectTransform>();
-        pauseTitleRect.sizeDelta = new Vector2(500, 80);
+        pauseTitleRect.sizeDelta = new Vector2(600, 100);
         pauseTitleRect.anchoredPosition = new Vector2(0, 160);
         Text pauseTitleText = pauseTitleObj.AddComponent<Text>();
         pauseTitleText.text = "GAME PAUSED";
-        pauseTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        pauseTitleText.fontSize = 48;
+        pauseTitleText.font = pixelFont;
+        pauseTitleText.fontSize = 50;
         pauseTitleText.fontStyle = FontStyle.Bold;
         pauseTitleText.alignment = TextAnchor.MiddleCenter;
-        pauseTitleText.color = new Color(0.7f, 0.1f, 0.1f, 1f);
+        pauseTitleText.color = new Color(0.85f, 0.85f, 0.85f, 1f);
         Shadow pauseTitleShadow = pauseTitleObj.AddComponent<Shadow>();
         pauseTitleShadow.effectColor = Color.black;
         pauseTitleShadow.effectDistance = new Vector2(3, -3);
 
-        // Pause Buttons
-        Color btnNormalColor = new Color(0.18f, 0.05f, 0.05f, 1f);
-        Color btnHoverColor = new Color(0.35f, 0.08f, 0.08f, 1f);
+        GameObject resumeBtnObj = CreateMenuButton(pausePanelObj.transform, "ResumeButton", "CONTINUE", new Vector2(0, 40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
+        GameObject mainMenuBtnObj = CreateMenuButton(pausePanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
+        GameObject quitBtnObj = CreateMenuButton(pausePanelObj.transform, "QuitButton", "QUIT GAME", new Vector2(0, -120), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
 
-        GameObject resumeBtnObj = CreateMenuButton(pausePanelObj.transform, "ResumeButton", "CONTINUE", new Vector2(0, 40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20);
-        GameObject mainMenuBtnObj = CreateMenuButton(pausePanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20);
-        GameObject quitBtnObj = CreateMenuButton(pausePanelObj.transform, "QuitButton", "QUIT GAME", new Vector2(0, -120), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20);
+        // Gán PauseMenuController
+        PauseMenuController pmCtrl = gameplayCanvas.gameObject.GetComponent<PauseMenuController>();
+        if (pmCtrl == null) pmCtrl = gameplayCanvas.gameObject.AddComponent<PauseMenuController>();
+        pmCtrl.pausePanel = pausePanelObj;
+        
+        UnityEventTools.AddVoidPersistentListener(resumeBtnObj.GetComponent<Button>().onClick, pmCtrl.ResumeGame);
+        UnityEventTools.AddVoidPersistentListener(mainMenuBtnObj.GetComponent<Button>().onClick, pmCtrl.LoadMainMenu);
+        UnityEventTools.AddVoidPersistentListener(quitBtnObj.GetComponent<Button>().onClick, pmCtrl.QuitGame);
 
-        UnityEventTools.AddVoidPersistentListener(resumeBtnObj.GetComponent<Button>().onClick, pauseCtrl.ResumeGame);
-        UnityEventTools.AddVoidPersistentListener(mainMenuBtnObj.GetComponent<Button>().onClick, pauseCtrl.LoadMainMenu);
-        UnityEventTools.AddVoidPersistentListener(quitBtnObj.GetComponent<Button>().onClick, pauseCtrl.QuitGame);
+        pausePanelObj.SetActive(false);
 
-        // --- SETUP GAME OVER MENU ---
-        Transform oldGameOver = canvasTransform.Find("GameOverPanel");
-        if (oldGameOver != null) Undo.DestroyObjectImmediate(oldGameOver.gameObject);
+        // Tạo hoặc cấu hình GameOverPanel
+        Transform existingGO = gameplayCanvas.transform.Find("GameOverPanel");
+        if (existingGO != null)
+        {
+            Undo.DestroyObjectImmediate(existingGO.gameObject);
+        }
 
         GameObject goPanelObj = new GameObject("GameOverPanel");
-        goPanelObj.transform.SetParent(canvasTransform, false);
+        goPanelObj.transform.SetParent(gameplayCanvas.transform, false);
         RectTransform goRect = goPanelObj.AddComponent<RectTransform>();
         goRect.anchorMin = Vector2.zero;
         goRect.anchorMax = Vector2.one;
         goRect.sizeDelta = Vector2.zero;
         goRect.anchoredPosition = Vector2.zero;
 
-        Image goImg = goPanelObj.AddComponent<Image>();
-        Sprite gameoverBg = AssetDatabase.LoadAssetAtPath<Sprite>(gameoverBgPath);
+        Image goBg = goPanelObj.AddComponent<Image>();
         if (gameoverBg != null)
         {
-            goImg.sprite = gameoverBg;
-            goImg.color = Color.white;
+            goBg.sprite = gameoverBg;
+            goBg.color = new Color(0.8f, 0.8f, 0.8f, 1f); // Thẫm màu Gothic
         }
         else
         {
-            goImg.color = new Color(0.1f, 0.02f, 0.02f, 0.95f);
+            goBg.color = new Color(0.15f, 0.02f, 0.02f, 0.95f);
         }
 
-        GameOverController goCtrl = canvas.gameObject.GetComponent<GameOverController>();
-        if (goCtrl == null) goCtrl = canvas.gameObject.AddComponent<GameOverController>();
-        goCtrl.gameOverPanel = goPanelObj;
-
-        // Title Game Over
-        GameObject goTitleObj = new GameObject("Title");
+        // Game Over Title
+        GameObject goTitleObj = new GameObject("GameOverTitle");
         goTitleObj.transform.SetParent(goPanelObj.transform, false);
         RectTransform goTitleRect = goTitleObj.AddComponent<RectTransform>();
-        goTitleRect.sizeDelta = new Vector2(800, 150);
-        goTitleRect.anchoredPosition = new Vector2(0, 180);
+        goTitleRect.sizeDelta = new Vector2(800, 120);
+        goTitleRect.anchoredPosition = new Vector2(0, 150);
         Text goTitleText = goTitleObj.AddComponent<Text>();
         goTitleText.text = "YOU DIED";
-        goTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        goTitleText.fontSize = 90;
+        goTitleText.font = pixelFont;
+        goTitleText.fontSize = 80;
         goTitleText.fontStyle = FontStyle.Bold;
         goTitleText.alignment = TextAnchor.MiddleCenter;
-        goTitleText.color = new Color(0.75f, 0.05f, 0.05f, 1f);
+        goTitleText.color = new Color(0.7f, 0.05f, 0.05f, 1f); // Màu đỏ máu đậm nghệ thuật
         Shadow goTitleShadow = goTitleObj.AddComponent<Shadow>();
         goTitleShadow.effectColor = Color.black;
         goTitleShadow.effectDistance = new Vector2(4, -4);
 
-        // Game Over Buttons
-        Color goBtnNormal = new Color(0.08f, 0.08f, 0.08f, 0.9f);
+        Color goBtnNormal = new Color(0.08f, 0.08f, 0.08f, 0.95f);
         Color goBtnHover = new Color(0.45f, 0.05f, 0.05f, 1f);
 
-        GameObject restartBtnObj = CreateMenuButton(goPanelObj.transform, "RestartButton", "TRY AGAIN", new Vector2(0, -60), new Vector2(350, 70), goBtnNormal, goBtnHover, 24);
-        GameObject goMainMenuBtnObj = CreateMenuButton(goPanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -150), new Vector2(350, 70), goBtnNormal, goBtnHover, 24);
+        GameObject restartBtnObj = CreateMenuButton(goPanelObj.transform, "RestartButton", "TRY AGAIN", new Vector2(0, -60), new Vector2(350, 70), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject goMainMenuBtnObj = CreateMenuButton(goPanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -150), new Vector2(350, 70), goBtnNormal, goBtnHover, 24, pixelFont);
+
+        // Gán GameOverController
+        GameOverController goCtrl = gameplayCanvas.gameObject.GetComponent<GameOverController>();
+        if (goCtrl == null) goCtrl = gameplayCanvas.gameObject.AddComponent<GameOverController>();
+        goCtrl.gameOverPanel = goPanelObj;
 
         UnityEventTools.AddVoidPersistentListener(restartBtnObj.GetComponent<Button>().onClick, goCtrl.RestartGame);
         UnityEventTools.AddVoidPersistentListener(goMainMenuBtnObj.GetComponent<Button>().onClick, goCtrl.LoadMainMenu);
 
-        EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
-        EditorSceneManager.SaveScene(canvas.gameObject.scene);
+        goPanelObj.SetActive(false);
+
+        // Tạo hoặc cấu hình BossDefeatedPanel
+        Transform existingBD = gameplayCanvas.transform.Find("BossDefeatedPanel");
+        if (existingBD != null)
+        {
+            Undo.DestroyObjectImmediate(existingBD.gameObject);
+        }
+
+        GameObject bdPanelObj = new GameObject("BossDefeatedPanel");
+        bdPanelObj.transform.SetParent(gameplayCanvas.transform, false);
+        RectTransform bdRect = bdPanelObj.AddComponent<RectTransform>();
+        bdRect.anchorMin = Vector2.zero;
+        bdRect.anchorMax = Vector2.one;
+        bdRect.sizeDelta = Vector2.zero;
+        bdRect.anchoredPosition = Vector2.zero;
+
+        Image bdBg = bdPanelObj.AddComponent<Image>();
+        if (bossDefeatedBg != null)
+        {
+            bdBg.sprite = bossDefeatedBg;
+            bdBg.color = new Color(0.9f, 0.9f, 0.9f, 1f); // Giữ nguyên độ sắc nét của tranh vẽ
+        }
+        else
+        {
+            bdBg.color = new Color(0.05f, 0.05f, 0.08f, 0.95f); // Đen mờ u ám dự phòng
+        }
+
+        Outline bdOutline = bdPanelObj.AddComponent<Outline>();
+        bdOutline.effectColor = new Color(0.85f, 0.65f, 0.15f, 0.5f); // Viền vàng hoàng kim
+        bdOutline.effectDistance = new Vector2(4, -4);
+
+        // Title
+        GameObject bdTitleObj = new GameObject("BossDefeatedTitle");
+        bdTitleObj.transform.SetParent(bdPanelObj.transform, false);
+        RectTransform bdTitleRect = bdTitleObj.AddComponent<RectTransform>();
+        bdTitleRect.sizeDelta = new Vector2(1000, 100);
+        bdTitleRect.anchoredPosition = new Vector2(0, 280);
+        Text bdTitleText = bdTitleObj.AddComponent<Text>();
+        bdTitleText.text = "THE FATE OF AURELIUS";
+        bdTitleText.font = pixelFont;
+        bdTitleText.fontSize = 55;
+        bdTitleText.fontStyle = FontStyle.Bold;
+        bdTitleText.alignment = TextAnchor.MiddleCenter;
+        bdTitleText.color = new Color(0.95f, 0.75f, 0.15f, 1f); // Màu vàng hoàng kim rực rỡ
+        
+        Shadow bdTitleShadow = bdTitleObj.AddComponent<Shadow>();
+        bdTitleShadow.effectColor = Color.black;
+        bdTitleShadow.effectDistance = new Vector2(4, -4);
+
+        // Subtitle
+        GameObject bdSubObj = new GameObject("BossDefeatedSubtitle");
+        bdSubObj.transform.SetParent(bdPanelObj.transform, false);
+        RectTransform bdSubRect = bdSubObj.AddComponent<RectTransform>();
+        bdSubRect.sizeDelta = new Vector2(1000, 100);
+        bdSubRect.anchoredPosition = new Vector2(0, 190);
+        Text bdSubText = bdSubObj.AddComponent<Text>();
+        bdSubText.text = "Hiệp sĩ Thánh đã ngã xuống. Lựa chọn định mệnh cho linh hồn ông:";
+        bdSubText.font = pixelFont;
+        bdSubText.fontSize = 22;
+        bdSubText.fontStyle = FontStyle.Normal;
+        bdSubText.alignment = TextAnchor.MiddleCenter;
+        bdSubText.color = new Color(0.9f, 0.9f, 0.9f, 1f);
+        
+        Shadow bdSubShadow = bdSubObj.AddComponent<Shadow>();
+        bdSubShadow.effectColor = Color.black;
+        bdSubShadow.effectDistance = new Vector2(2, -2);
+
+        // Buttons (Sắp xếp Symmetrical: Trái vs Phải để khớp với giao diện Ánh sáng vs Bóng tối)
+        Color btnRedemptionColor = new Color(0.08f, 0.28f, 0.14f, 0.9f); // Xanh lá cây hoàng kim nhạt (Bên Trái - Cứu Rỗi)
+        Color btnRedemptionHover = new Color(0.12f, 0.48f, 0.24f, 1f);
+        
+        Color btnLegacyColor = new Color(0.35f, 0.05f, 0.05f, 0.9f); // Đỏ thẫm hắc ám (Bên Phải - Kế Thừa)
+        Color btnLegacyHover = new Color(0.58f, 0.08f, 0.08f, 1f);
+
+        // Nút bên trái (X = -320) và Nút bên phải (X = 320)
+        GameObject redemptionBtnObj = CreateMenuButton(bdPanelObj.transform, "RedemptionButton", "REDEMPTION (CỨU RỖI)", new Vector2(-320, -180), new Vector2(440, 80), btnRedemptionColor, btnRedemptionHover, 22, pixelFont);
+        GameObject legacyBtnObj = CreateMenuButton(bdPanelObj.transform, "LegacyButton", "LEGACY (KẾ THỪA BÓNG TỐI)", new Vector2(320, -180), new Vector2(440, 80), btnLegacyColor, btnLegacyHover, 22, pixelFont);
+
+        // Gán sự kiện cho các nút lựa chọn Ending
+        UnityEventTools.AddVoidPersistentListener(redemptionBtnObj.GetComponent<Button>().onClick, pmCtrl.ChooseRedemptionEnding);
+        UnityEventTools.AddVoidPersistentListener(legacyBtnObj.GetComponent<Button>().onClick, pmCtrl.ChooseLegacyEnding);
+
+        bdPanelObj.SetActive(false);
+
+        EditorSceneManager.MarkSceneDirty(gameplayCanvas.gameObject.scene);
+        EditorSceneManager.SaveScene(gameplayCanvas.gameObject.scene);
 
         // ------------------ 3. SETUP MAIN MENU SCENE ------------------
         string targetMenuScenePath = "Assets/_Project/Scenes/MainMenuScene.unity";
@@ -761,31 +865,27 @@ public static class SetupUIEditor
         Canvas menuCanvas = Object.FindAnyObjectByType<Canvas>();
         if (menuCanvas == null)
         {
-            GameObject mcObj = new GameObject("Canvas");
-            menuCanvas = mcObj.AddComponent<Canvas>();
+            GameObject canvasObj = new GameObject("MenuCanvas");
+            menuCanvas = canvasObj.AddComponent<Canvas>();
             menuCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            CanvasScaler ms = mcObj.AddComponent<CanvasScaler>();
-            ms.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            ms.referenceResolution = new Vector2(1920, 1080);
-            ms.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            ms.matchWidthOrHeight = 0.5f;
-            mcObj.AddComponent<GraphicRaycaster>();
+            canvasObj.AddComponent<CanvasScaler>();
+            canvasObj.AddComponent<GraphicRaycaster>();
         }
 
-        // Background Main Menu
-        GameObject menuBgObj = new GameObject("Background");
-        menuBgObj.transform.SetParent(menuCanvas.transform, false);
-        RectTransform menuBgRect = menuBgObj.AddComponent<RectTransform>();
-        menuBgRect.anchorMin = Vector2.zero;
-        menuBgRect.anchorMax = Vector2.one;
-        menuBgRect.sizeDelta = Vector2.zero;
-        menuBgRect.anchoredPosition = Vector2.zero;
-        Image menuBgImg = menuBgObj.AddComponent<Image>();
-        Sprite menuBg = AssetDatabase.LoadAssetAtPath<Sprite>(menuBgPath);
+        // Cập nhật background cho Menu Canvas
+        GameObject bgObj = new GameObject("MenuBackground");
+        bgObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform bgRect = bgObj.AddComponent<RectTransform>();
+        bgRect.anchorMin = Vector2.zero;
+        bgRect.anchorMax = Vector2.one;
+        bgRect.sizeDelta = Vector2.zero;
+        bgRect.anchoredPosition = Vector2.zero;
+        
+        Image menuBgImg = bgObj.AddComponent<Image>();
         if (menuBg != null)
         {
             menuBgImg.sprite = menuBg;
-            menuBgImg.color = Color.white;
+            menuBgImg.color = new Color(0.75f, 0.75f, 0.75f, 1f);
         }
         else
         {
@@ -795,16 +895,28 @@ public static class SetupUIEditor
         // Main Menu Controller Manager
         GameObject menuManager = new GameObject("MainMenuManager");
         MainMenuController menuCtrl = menuManager.AddComponent<MainMenuController>();
+        StoryCutsceneController storyCtrl = menuManager.AddComponent<StoryCutsceneController>();
+
+        // Container chứa toàn bộ UI menu chính gốc để ẩn/hiện dễ dàng
+        GameObject mainMenuContainer = new GameObject("MainMenuContainer");
+        mainMenuContainer.transform.SetParent(menuCanvas.transform, false);
+        RectTransform mainContainerRect = mainMenuContainer.AddComponent<RectTransform>();
+        mainContainerRect.anchorMin = Vector2.zero;
+        mainContainerRect.anchorMax = Vector2.one;
+        mainContainerRect.sizeDelta = Vector2.zero;
+
+        // Cấu hình tham chiếu trên menuCtrl
+        menuCtrl.mainMenuContainer = mainMenuContainer;
 
         // Title
         GameObject menuTitleObj = new GameObject("Title");
-        menuTitleObj.transform.SetParent(menuCanvas.transform, false);
+        menuTitleObj.transform.SetParent(mainMenuContainer.transform, false);
         RectTransform menuTitleRect = menuTitleObj.AddComponent<RectTransform>();
         menuTitleRect.sizeDelta = new Vector2(1200, 120);
         menuTitleRect.anchoredPosition = new Vector2(0, 240);
         Text menuTitleText = menuTitleObj.AddComponent<Text>();
         menuTitleText.text = "THE FALLEN KNIGHT";
-        menuTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        menuTitleText.font = pixelFont;
         menuTitleText.fontSize = 80;
         menuTitleText.fontStyle = FontStyle.Bold;
         menuTitleText.alignment = TextAnchor.MiddleCenter;
@@ -815,13 +927,13 @@ public static class SetupUIEditor
 
         // Subtitle
         GameObject menuSubObj = new GameObject("Subtitle");
-        menuSubObj.transform.SetParent(menuCanvas.transform, false);
+        menuSubObj.transform.SetParent(mainMenuContainer.transform, false);
         RectTransform menuSubRect = menuSubObj.AddComponent<RectTransform>();
         menuSubRect.sizeDelta = new Vector2(800, 50);
         menuSubRect.anchoredPosition = new Vector2(0, 160);
         Text menuSubText = menuSubObj.AddComponent<Text>();
         menuSubText.text = "Dark Fantasy Chronicles";
-        menuSubText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        menuSubText.font = pixelFont;
         menuSubText.fontSize = 26;
         menuSubText.fontStyle = FontStyle.Italic;
         menuSubText.alignment = TextAnchor.MiddleCenter;
@@ -831,15 +943,13 @@ public static class SetupUIEditor
         menuSubShadow.effectDistance = new Vector2(2, -2);
 
         // Menu Buttons
-        GameObject playBtnObj = CreateMenuButton(menuCanvas.transform, "PlayButton", "PLAY GAME", new Vector2(0, -40), new Vector2(360, 75), goBtnNormal, goBtnHover, 24);
-        GameObject quitGameBtnObj = CreateMenuButton(menuCanvas.transform, "QuitButton", "QUIT GAME", new Vector2(0, -140), new Vector2(360, 75), goBtnNormal, goBtnHover, 24);
-
-        UnityEventTools.AddVoidPersistentListener(playBtnObj.GetComponent<Button>().onClick, menuCtrl.PlayGame);
-        UnityEventTools.AddVoidPersistentListener(quitGameBtnObj.GetComponent<Button>().onClick, menuCtrl.QuitGame);
+        GameObject playBtnObj = CreateMenuButton(mainMenuContainer.transform, "PlayButton", "PLAY GAME", new Vector2(0, 40), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject storyBtnObj = CreateMenuButton(mainMenuContainer.transform, "StoryButton", "STORY VIEWER", new Vector2(0, -50), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject quitGameBtnObj = CreateMenuButton(mainMenuContainer.transform, "QuitButton", "QUIT GAME", new Vector2(0, -140), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
 
         // --- CREDITS PANEL (Góc phải màn hình Main Menu) ---
         GameObject creditsPanelObj = new GameObject("CreditsPanel");
-        creditsPanelObj.transform.SetParent(menuCanvas.transform, false);
+        creditsPanelObj.transform.SetParent(mainMenuContainer.transform, false);
         RectTransform creditsRect = creditsPanelObj.AddComponent<RectTransform>();
         creditsRect.anchorMin = new Vector2(1, 0); // Bottom-Right
         creditsRect.anchorMax = new Vector2(1, 0);
@@ -892,7 +1002,7 @@ public static class SetupUIEditor
                            "• SE150834 - Nguyễn Quốc Khánh\n" +
                            "• Se172559 - Huỳnh Hoàng Tiến\n" +
                            "• SE160204 - Trương Anh Kiệt";
-        membersText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        membersText.font = pixelFont;
         membersText.fontSize = 15;
         membersText.fontStyle = FontStyle.Bold;
         membersText.alignment = TextAnchor.UpperLeft;
@@ -902,6 +1012,177 @@ public static class SetupUIEditor
         Shadow membersShadow = membersObj.AddComponent<Shadow>();
         membersShadow.effectColor = Color.black;
         membersShadow.effectDistance = new Vector2(2, -2);
+
+        // --- STORY SUBMENU PANEL ---
+        GameObject storySubPanelObj = new GameObject("StorySubmenuPanel");
+        storySubPanelObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform storySubRect = storySubPanelObj.AddComponent<RectTransform>();
+        storySubRect.sizeDelta = new Vector2(500, 480);
+        storySubRect.anchoredPosition = Vector2.zero;
+        Image storySubImg = storySubPanelObj.AddComponent<Image>();
+        storySubImg.color = new Color(0.05f, 0.05f, 0.05f, 0.95f);
+        Outline storySubOutline = storySubPanelObj.AddComponent<Outline>();
+        storySubOutline.effectColor = new Color(0.5f, 0.1f, 0.1f, 0.7f);
+        storySubOutline.effectDistance = new Vector2(3, -3);
+        storySubPanelObj.SetActive(false);
+
+        // Cấu hình tham chiếu trên menuCtrl
+        menuCtrl.storySubmenuPanel = storySubPanelObj;
+
+        // Submenu Title
+        GameObject storySubTitleObj = new GameObject("Title");
+        storySubTitleObj.transform.SetParent(storySubPanelObj.transform, false);
+        RectTransform storySubTitleRect = storySubTitleObj.AddComponent<RectTransform>();
+        storySubTitleRect.sizeDelta = new Vector2(400, 60);
+        storySubTitleRect.anchoredPosition = new Vector2(0, 180);
+        Text storySubTitleText = storySubTitleObj.AddComponent<Text>();
+        storySubTitleText.text = "BIÊN NIÊN SỬ";
+        storySubTitleText.font = pixelFont;
+        storySubTitleText.fontSize = 32;
+        storySubTitleText.fontStyle = FontStyle.Bold;
+        storySubTitleText.alignment = TextAnchor.MiddleCenter;
+        storySubTitleText.color = new Color(0.7f, 0.1f, 0.1f, 1f);
+        Shadow storySubTitleShadow = storySubTitleObj.AddComponent<Shadow>();
+        storySubTitleShadow.effectColor = Color.black;
+        storySubTitleShadow.effectDistance = new Vector2(2, -2);
+
+        // Submenu Buttons
+        GameObject introBtn = CreateMenuButton(storySubPanelObj.transform, "IntroBtn", "1. LORE INTRO", new Vector2(0, 80), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
+        GameObject redemptionBtn = CreateMenuButton(storySubPanelObj.transform, "RedemptionBtn", "2. REDEMPTION ENDING", new Vector2(0, 0), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
+        GameObject legacyBtn = CreateMenuButton(storySubPanelObj.transform, "LegacyBtn", "3. LEGACY ENDING", new Vector2(0, -80), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
+        GameObject backSubBtn = CreateMenuButton(storySubPanelObj.transform, "BackSubBtn", "BACK TO MENU", new Vector2(0, -160), new Vector2(380, 60), new Color(0.1f, 0.1f, 0.1f, 1f), new Color(0.2f, 0.2f, 0.2f, 1f), 18, pixelFont);
+
+        // --- STORY PLAY PANEL (FULL SCREEN) ---
+        GameObject storyPanelObj = new GameObject("StoryPanel");
+        storyPanelObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform storyPanelRect = storyPanelObj.AddComponent<RectTransform>();
+        storyPanelRect.anchorMin = Vector2.zero;
+        storyPanelRect.anchorMax = Vector2.one;
+        storyPanelRect.sizeDelta = Vector2.zero;
+        storyPanelRect.anchoredPosition = Vector2.zero;
+        Image storyPanelImg = storyPanelObj.AddComponent<Image>();
+        storyPanelImg.color = Color.black;
+        storyPanelObj.SetActive(false);
+
+        // Text Slideshow
+        GameObject ssTextObj = new GameObject("SlideshowText");
+        ssTextObj.transform.SetParent(storyPanelObj.transform, false);
+        RectTransform ssTextRect = ssTextObj.AddComponent<RectTransform>();
+        ssTextRect.sizeDelta = new Vector2(1400, 400);
+        ssTextRect.anchoredPosition = Vector2.zero;
+        Text ssText = ssTextObj.AddComponent<Text>();
+        ssText.font = pixelFont;
+        ssText.fontSize = 30;
+        ssText.fontStyle = FontStyle.Bold;
+        ssText.alignment = TextAnchor.MiddleCenter;
+        ssText.color = Color.white;
+        ssText.lineSpacing = 1.4f;
+        Shadow ssTextShadow = ssTextObj.AddComponent<Shadow>();
+        ssTextShadow.effectColor = Color.black;
+        ssTextShadow.effectDistance = new Vector2(2, -2);
+
+        // Video Render Display (RawImage)
+        GameObject rawImgObj = new GameObject("VideoDisplay");
+        rawImgObj.transform.SetParent(storyPanelObj.transform, false);
+        RectTransform rawImgRect = rawImgObj.AddComponent<RectTransform>();
+        rawImgRect.anchorMin = Vector2.zero;
+        rawImgRect.anchorMax = Vector2.one;
+        rawImgRect.sizeDelta = Vector2.zero;
+        rawImgRect.anchoredPosition = Vector2.zero;
+        RawImage rawImg = rawImgObj.AddComponent<RawImage>();
+        rawImg.color = Color.black;
+
+        // Video Player component on manager
+        UnityEngine.Video.VideoPlayer vp = menuManager.AddComponent<UnityEngine.Video.VideoPlayer>();
+        vp.playOnAwake = false;
+        vp.renderMode = UnityEngine.Video.VideoRenderMode.RenderTexture;
+
+        // Credits Container (cuộn chữ)
+        GameObject credContainerObj = new GameObject("StoryCreditsContainer");
+        credContainerObj.transform.SetParent(storyPanelObj.transform, false);
+        RectTransform credContainerRect = credContainerObj.AddComponent<RectTransform>();
+        credContainerRect.sizeDelta = new Vector2(1000, 1000);
+        credContainerRect.anchoredPosition = new Vector2(0, -600); // Khởi đầu bên dưới
+        
+        Text storyCredText = credContainerObj.AddComponent<Text>();
+        storyCredText.text = "THE FALLEN KNIGHT\n\n\n" +
+                             "DEVELOPED BY TEAM FPTU:\n\n" +
+                             "• SE171440 - Hứa Hoàng Minh\n\n" +
+                             "• SE150834 - Nguyễn Quốc Khánh\n\n" +
+                             "• Se172559 - Huỳnh Hoàng Tiến\n\n" +
+                             "• SE160204 - Trương Anh Kiệt\n\n\n" +
+                             "THANKS FOR PLAYING!";
+        storyCredText.font = pixelFont;
+        storyCredText.fontSize = 28;
+        storyCredText.fontStyle = FontStyle.Bold;
+        storyCredText.alignment = TextAnchor.UpperCenter;
+        storyCredText.color = new Color(0.9f, 0.1f, 0.1f, 1f);
+        Shadow storyCredShadow = credContainerObj.AddComponent<Shadow>();
+        storyCredShadow.effectColor = Color.black;
+        storyCredShadow.effectDistance = new Vector2(3, -3);
+
+        // Skip Button (Góc dưới bên phải)
+        GameObject skipBtnObj = CreateMenuButton(storyPanelObj.transform, "SkipBtn", "SKIP (ESC)", new Vector2(750, -450), new Vector2(240, 60), new Color(0.2f, 0.05f, 0.05f, 0.8f), new Color(0.4f, 0.05f, 0.05f, 1f), 18, pixelFont);
+
+        // Cài đặt Controller
+        UnityEngine.Video.VideoClip introClip = AssetDatabase.LoadAssetAtPath<UnityEngine.Video.VideoClip>("Assets/video/intro_boss_transformation.mp4");
+        UnityEngine.Video.VideoClip redemptionClip = AssetDatabase.LoadAssetAtPath<UnityEngine.Video.VideoClip>("Assets/video/ending_redemption.mp4");
+        UnityEngine.Video.VideoClip legacyClip = AssetDatabase.LoadAssetAtPath<UnityEngine.Video.VideoClip>("Assets/video/ending_legacy.mp4");
+
+        storyCtrl.storyPanel = storyPanelObj;
+        storyCtrl.slideshowText = ssText;
+        storyCtrl.videoDisplay = rawImg;
+        storyCtrl.videoPlayer = vp;
+        storyCtrl.creditsContainer = credContainerRect;
+        storyCtrl.creditsText = storyCredText;
+        storyCtrl.mainMenuCanvasGroup = storySubPanelObj; // Khi kết thúc sẽ mở lại Submenu
+
+        storyCtrl.introClip = introClip;
+        storyCtrl.redemptionClip = redemptionClip;
+        storyCtrl.legacyClip = legacyClip;
+
+        // Nội dung Slide
+        storyCtrl.introSlides = new string[] {
+            "Hàng nghìn năm trước, Hiệp sĩ Thánh Aurelius là người anh hùng đã đánh bại Quỷ Vương và cứu lấy lục địa Elyndor.",
+            "Sau chiến thắng, các vị thần từ chối đưa ông lên Thiên Giới vì linh hồn ông được sinh ra từ chiến tranh và máu đổ.",
+            "Không thể chết, cũng không thể được cứu rỗi, Aurelius lang thang suốt nhiều thế kỷ.",
+            "Qua thời gian, khát vọng bảo vệ nhân loại dần biến thành cơn ám ảnh phải chiến đấu không ngừng. Ông tin rằng chỉ có chiến tranh mới giữ cho thế giới tồn tại.",
+            "Người anh hùng năm xưa dần trở thành mối hiểm họa lớn nhất của nhân loại.",
+            "Người chơi vào vai The Nameless – một chiến binh trẻ mang trong mình Soul of Dawn...",
+            "...linh hồn được các vị thần tạo ra nhằm chấm dứt vòng lặp chiến tranh và giải thoát cho Hiệp sĩ Thánh."
+        };
+        
+        storyCtrl.redemptionSlides = new string[] {
+            "Trận chiến sinh tử kết thúc...",
+            "The Nameless đã giải thoát thành công linh hồn Hiệp sĩ Thánh Aurelius.",
+            "Bóng tối đang dần bị thanh tẩy bởi hào quang cứu thế của Soul of Dawn..."
+        };
+        
+        storyCtrl.legacySlides = new string[] {
+            "Hiệp sĩ Thánh đã ngã xuống...",
+            "Nhưng tàn dư bóng tối vẫn quẩn quanh và tìm kiếm chủ nhân mới.",
+            "Vòng lặp vô tận của chiến tranh và thù hận lại tiếp diễn..."
+        };
+
+        // Gán sự kiện click bằng UnityEventTools
+        UnityEventTools.AddVoidPersistentListener(playBtnObj.GetComponent<Button>().onClick, menuCtrl.PlayGame);
+        UnityEventTools.AddVoidPersistentListener(quitGameBtnObj.GetComponent<Button>().onClick, menuCtrl.QuitGame);
+
+        // Hiển thị submenu Story khi click Story Button
+        Button storyBtn = storyBtnObj.GetComponent<Button>();
+        UnityEventTools.AddVoidPersistentListener(storyBtn.onClick, menuCtrl.ShowStorySubmenu);
+
+        // Trở về Main Menu từ Story Submenu
+        Button backSub = backSubBtn.GetComponent<Button>();
+        UnityEventTools.AddVoidPersistentListener(backSub.onClick, menuCtrl.HideStorySubmenu);
+
+        // Chạy các đoạn cutscene tương ứng
+        UnityEventTools.AddVoidPersistentListener(introBtn.GetComponent<Button>().onClick, storyCtrl.PlayIntroSequence);
+        UnityEventTools.AddVoidPersistentListener(redemptionBtn.GetComponent<Button>().onClick, storyCtrl.PlayRedemptionSequence);
+        UnityEventTools.AddVoidPersistentListener(legacyBtn.GetComponent<Button>().onClick, storyCtrl.PlayLegacySequence);
+
+        // Nút Skip
+        UnityEventTools.AddVoidPersistentListener(skipBtnObj.GetComponent<Button>().onClick, storyCtrl.ExitStory);
 
         // Đảm bảo có EventSystem trong MainMenuScene để tương tác được các nút
         UnityEngine.EventSystems.EventSystem eventSystem = Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
@@ -928,15 +1209,14 @@ public static class SetupUIEditor
         AssetDatabase.Refresh();
 
         EditorUtility.DisplayDialog("Thành công", 
-            "Đã khởi tạo hệ thống Giao Diện Dark Fantasy thành công:\n\n" +
-            "1. Cấu hình 2 ảnh nền Gothic tuyệt đẹp (Menu Background & Game Over Background).\n" +
-            "2. Tạo màn hình Tạm dừng (PauseMenuPanel) & Màn hình báo tử (GameOverPanel) trong Gameplay Scene.\n" +
-            "3. Tạo cảnh chứa Menu chính (MainMenuScene.unity) đầy đủ hiệu ứng âm u huyền bí.\n" +
-            "4. Đã tự động cấu hình Build Settings để chạy liên kết giữa các cảnh chơi!\n\n" +
+            "Đã khởi tạo hệ thống Giao Diện Dark Fantasy & Câu chuyện thành công:\n\n" +
+            "1. Tích hợp Font Pixel Game tự động cho tất cả menu (Pause, Game Over, Main Menu, Story).\n" +
+            "2. Tạo Submenu Biên Niên Sử với 3 phần: Lore Intro, Redemption Ending, Legacy Ending.\n" +
+            "3. Hỗ trợ hiển thị chữ trượt (Slideshow), chạy Video Player tương ứng toàn màn hình và tự động cuộn Credits tên thành viên nhóm!\n\n" +
             "Nhấn Play trong Unity để cảm nhận thành quả!", "Tuyệt vời");
     }
 
-    private static GameObject CreateMenuButton(Transform parent, string name, string textStr, Vector2 pos, Vector2 size, Color normalColor, Color highlightedColor, int fontSize)
+    private static GameObject CreateMenuButton(Transform parent, string name, string textStr, Vector2 pos, Vector2 size, Color normalColor, Color highlightedColor, int fontSize, Font customFont = null)
     {
         GameObject btnObj = new GameObject(name);
         btnObj.transform.SetParent(parent, false);
@@ -969,7 +1249,7 @@ public static class SetupUIEditor
 
         Text txt = txtObj.AddComponent<Text>();
         txt.text = textStr;
-        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.font = customFont != null ? customFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         txt.fontSize = fontSize;
         txt.fontStyle = FontStyle.Bold;
         txt.alignment = TextAnchor.MiddleCenter;

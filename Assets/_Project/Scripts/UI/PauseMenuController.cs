@@ -41,6 +41,7 @@ public class PauseMenuController : MonoBehaviour
 
     public void ResumeGame()
     {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
         isPaused = false;
         if (pausePanel != null)
         {
@@ -56,6 +57,7 @@ public class PauseMenuController : MonoBehaviour
         PlayerController player = Object.FindAnyObjectByType<PlayerController>();
         if (player != null && player.IsDead()) return;
 
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
         isPaused = true;
         if (pausePanel != null)
         {
@@ -67,6 +69,7 @@ public class PauseMenuController : MonoBehaviour
 
     public void LoadMainMenu()
     {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
         Time.timeScale = 1f;
         Debug.Log("[PauseMenu] Quay lại Main Menu...");
         SceneManager.LoadScene("MainMenuScene");
@@ -74,8 +77,27 @@ public class PauseMenuController : MonoBehaviour
 
     public void QuitGame()
     {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
         Debug.Log("[PauseMenu] Thoát game!");
         Application.Quit();
+    }
+
+    public void ChooseRedemptionEnding()
+    {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
+        Time.timeScale = 1f;
+        PlayerPrefs.SetString("PendingCutscene", "Redemption");
+        PlayerPrefs.Save();
+        SceneManager.LoadScene("MainMenuScene");
+    }
+
+    public void ChooseLegacyEnding()
+    {
+        AudioManager.Instance.PlaySFX(SoundEffect.ButtonClick);
+        Time.timeScale = 1f;
+        PlayerPrefs.SetString("PendingCutscene", "Legacy");
+        PlayerPrefs.Save();
+        SceneManager.LoadScene("MainMenuScene");
     }
 
     public bool IsPaused()

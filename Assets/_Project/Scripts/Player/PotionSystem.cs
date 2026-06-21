@@ -91,10 +91,8 @@ public class PotionSystem : MonoBehaviour
     {
         if (playerStats == null) return;
         
-        // Nếu máu đã đầy thì không cần uống (tùy chọn, ở đây cho uống tự do nhưng kiểm tra số lượng)
         if (healthPotionCount <= 0)
         {
-            Debug.Log("[PotionSystem] Đã hết Bình Hồi Máu!");
             return;
         }
 
@@ -109,7 +107,6 @@ public class PotionSystem : MonoBehaviour
         }
 
         UpdateCountUI();
-        Debug.Log($"[PotionSystem] Đã dùng 1 Bình Máu. Còn lại: {healthPotionCount}");
     }
 
     public void UseManaPotion()
@@ -118,7 +115,6 @@ public class PotionSystem : MonoBehaviour
 
         if (manaPotionCount <= 0)
         {
-            Debug.Log("[PotionSystem] Đã hết Bình Hồi Mana!");
             return;
         }
 
@@ -133,14 +129,12 @@ public class PotionSystem : MonoBehaviour
         }
 
         UpdateCountUI();
-        Debug.Log($"[PotionSystem] Đã dùng 1 Bình Mana. Còn lại: {manaPotionCount}");
     }
 
     public void UseSpeedPotion()
     {
         if (speedPotionCount <= 0)
         {
-            Debug.Log("[PotionSystem] Đã hết Bình Tốc Độ!");
             return;
         }
 
@@ -155,7 +149,6 @@ public class PotionSystem : MonoBehaviour
         }
 
         UpdateCountUI();
-        Debug.Log($"[PotionSystem] Đã dùng 1 Bình Tốc Độ. Còn lại: {speedPotionCount}");
     }
 
     public void AddHealthPotion(int amount = 1)
@@ -219,7 +212,6 @@ public class PotionSystem : MonoBehaviour
                 anim.speed = 1.0f;
             }
         }
-        Debug.Log("[PotionSystem] Hiệu ứng Bình Tốc Độ đã kết thúc.");
     }
 
     private System.Collections.IEnumerator FlashSpriteColor(Color flashColor, float duration)
@@ -244,15 +236,37 @@ public class PotionSystem : MonoBehaviour
     private void CreatePotionHUD()
     {
         Canvas canvas = null;
-#if UNITY_2022_1_OR_NEWER
         Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        if (canvases != null && canvases.Length > 0)
+        
+        // Tìm Canvas có tên phù hợp thuộc cùng Scene với Player
+        foreach (Canvas c in canvases)
+        {
+            if (c.gameObject.scene.name == gameObject.scene.name && 
+                (c.name.ToUpper().Contains("HUD") || c.name.ToUpper().Contains("GAME") || c.name.ToUpper().Contains("PLAY")))
+            {
+                canvas = c;
+                break;
+            }
+        }
+        
+        // Nếu không thấy, lấy bất kỳ Canvas nào thuộc cùng Scene
+        if (canvas == null)
+        {
+            foreach (Canvas c in canvases)
+            {
+                if (c.gameObject.scene.name == gameObject.scene.name)
+                {
+                    canvas = c;
+                    break;
+                }
+            }
+        }
+
+        // Dự phòng cuối cùng nếu vẫn không thấy Canvas nào
+        if (canvas == null && canvases.Length > 0)
         {
             canvas = canvases[0];
         }
-#else
-        canvas = FindObjectOfType<Canvas>(true);
-#endif
 
         if (canvas == null)
         {
@@ -278,12 +292,15 @@ public class PotionSystem : MonoBehaviour
         // 1. Tạo Container chính cho Potion HUD
         GameObject hudObj = new GameObject("PotionHUD");
         hudObj.transform.SetParent(canvas.transform, false);
+        
+        // Đưa HUD lên trên cùng (vẽ sau các panel khác) để không bị đè khuất
+        hudObj.transform.SetAsLastSibling();
 
         RectTransform hudRect = hudObj.AddComponent<RectTransform>();
         hudRect.anchorMin = new Vector2(0f, 1f);
         hudRect.anchorMax = new Vector2(0f, 1f);
         hudRect.pivot = new Vector2(0f, 1f);
-        // Đặt thẳng dưới thanh Mana Bar (ManaBar có Y từ -88px đến -116px, ta đặt PotionHUD ở Y = -130px)
+        // Đặt ở vị trí X=40, Y=-130 (dưới thanh HP/Mana)
         hudRect.anchoredPosition = new Vector2(40f, -130f); 
         hudRect.sizeDelta = new Vector2(250f, 65f);
 
@@ -312,6 +329,14 @@ public class PotionSystem : MonoBehaviour
         Image bgImage = slotObj.AddComponent<Image>();
         bgImage.sprite = CreateRoundedRectSprite(64, 64, 10, new Color(0.1f, 0.1f, 0.1f, 0.85f), new Color(0.35f, 0.35f, 0.35f, 0.7f), 2);
 
+        // Tạo default sprite nếu chưa được gán để tránh hiển thị ô vuông trắng trống
+        if (iconSprite == null)
+        {
+            if (slotName == "Health") iconSprite = CreateRoundedRectSprite(48, 48, 8, new Color(0.85f, 0.15f, 0.15f, 1f), Color.white, 2);
+            else if (slotName == "Mana") iconSprite = CreateRoundedRectSprite(48, 48, 8, new Color(0.15f, 0.45f, 0.85f, 1f), Color.white, 2);
+            else if (slotName == "Speed") iconSprite = CreateRoundedRectSprite(48, 48, 8, new Color(0.85f, 0.7f, 0.15f, 1f), Color.white, 2);
+        }
+
         // Tạo Icon Potion bên trong
         GameObject iconObj = new GameObject("Icon");
         iconObj.transform.SetParent(slotObj.transform, false);
@@ -331,12 +356,18 @@ public class PotionSystem : MonoBehaviour
         hotkeyObj.transform.SetParent(slotObj.transform, false);
 
         Text hotkeyText = hotkeyObj.AddComponent<Text>();
-        hotkeyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        Font customFont = FindCustomFontAtRuntime();
+        if (customFont == null) customFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        if (customFont == null) customFont = Font.CreateDynamicFontFromOSFont("Arial", 11);
+        
+        hotkeyText.font = customFont;
         hotkeyText.fontSize = 11;
         hotkeyText.fontStyle = FontStyle.Bold;
         hotkeyText.color = new Color(0.9f, 0.9f, 0.9f, 0.95f);
         hotkeyText.text = hotkeyLabel;
         hotkeyText.alignment = TextAnchor.UpperLeft;
+        hotkeyText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        hotkeyText.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform hotkeyRect = hotkeyObj.GetComponent<RectTransform>();
         hotkeyRect.anchorMin = new Vector2(0f, 1f);
@@ -345,20 +376,22 @@ public class PotionSystem : MonoBehaviour
         hotkeyRect.anchoredPosition = new Vector2(4f, -3f);
         hotkeyRect.sizeDelta = new Vector2(25f, 14f);
 
-        Shadow hotkeyShadow = hotkeyObj.AddComponent<Shadow>();
-        hotkeyShadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
-        hotkeyShadow.effectDistance = new Vector2(1f, -1f);
+        Shadow shadowHotkey = hotkeyObj.AddComponent<Shadow>();
+        shadowHotkey.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        shadowHotkey.effectDistance = new Vector2(1f, -1f);
 
         // Tạo Text số lượng Potion ở góc dưới bên phải
         GameObject countObj = new GameObject("Count");
         countObj.transform.SetParent(slotObj.transform, false);
 
         Text countText = countObj.AddComponent<Text>();
-        countText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        countText.font = customFont;
         countText.fontSize = 14;
         countText.fontStyle = FontStyle.Bold;
         countText.color = Color.white;
         countText.alignment = TextAnchor.LowerRight;
+        countText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        countText.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform countRect = countObj.GetComponent<RectTransform>();
         countRect.anchorMin = new Vector2(1f, 0f);
@@ -434,5 +467,18 @@ public class PotionSystem : MonoBehaviour
         tex.Apply();
         
         return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+    }
+
+    private Font FindCustomFontAtRuntime()
+    {
+        Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
+        foreach (Font f in fonts)
+        {
+            if (f != null && f.name != "Arial" && f.name != "LegacyRuntime" && !f.name.StartsWith("Liberation"))
+            {
+                return f;
+            }
+        }
+        return null;
     }
 }
