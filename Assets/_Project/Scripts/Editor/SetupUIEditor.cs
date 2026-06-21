@@ -1605,4 +1605,62 @@ public static class SetupUIEditor
         }
         return null;
     }
+
+    [MenuItem("Tools/Create Spike Trap Object")]
+    public static void CreateSpikeTrapObject()
+    {
+        // 1. Tìm sprite env_sprites_86
+        string texturePath = "Assets/Pixel Lost Game Scene/Sprites/Sliced/env_sprites.png";
+        string spriteName = "env_sprites_86";
+        Sprite spikeSprite = LoadSubSprite(texturePath, spriteName);
+
+        if (spikeSprite == null)
+        {
+            EditorUtility.DisplayDialog("Lỗi", $"Không tìm thấy Sprite '{spriteName}' trong sheet '{texturePath}'!\nHãy kiểm tra xem file ảnh có đúng đường dẫn đó không.", "OK");
+            return;
+        }
+
+        // 2. Tạo GameObject Chông Gai
+        GameObject spikeObj = new GameObject("Spike_Trap");
+        spikeObj.transform.position = Vector3.zero;
+
+        // 3. Thêm SpriteRenderer và gán Sprite
+        SpriteRenderer sr = spikeObj.AddComponent<SpriteRenderer>();
+        sr.sprite = spikeSprite;
+        sr.sortingOrder = 4; // Vẽ trước Background, ngang hoặc sau Player/Enemy chút
+
+        // 4. Thêm BoxCollider2D và thiết lập là Trigger
+        BoxCollider2D boxCollider = spikeObj.AddComponent<BoxCollider2D>();
+        boxCollider.isTrigger = true;
+        // Tinh chỉnh kích thước Collider nhỏ hơn một chút cho công bằng về hitbox (không quá rộng)
+        boxCollider.size = new Vector2(0.9f, 0.7f);
+        boxCollider.offset = new Vector2(0f, -0.1f);
+
+        // 5. Thêm script SpikeTrap
+        spikeObj.AddComponent<SpikeTrap>();
+
+        // Đăng ký Undo và chọn đối tượng mới tạo trong Hierarchy
+        Undo.RegisterCreatedObjectUndo(spikeObj, "Tạo Spike Trap");
+        Selection.activeGameObject = spikeObj;
+
+        EditorUtility.DisplayDialog("Thành công", 
+            "Đã tạo thành công đối tượng chông gai Spike_Trap trong Hierarchy!\n\n" +
+            "1. Tự động tìm và gán sprite 'env_sprites_86' từ sheet.\n" +
+            "2. Đã thêm BoxCollider2D (Trigger) thu gọn hitbox công bằng.\n" +
+            "3. Đã gắn script SpikeTrap gây 9999 sát thương (chạm là hẹo).\n\n" +
+            "Gợi ý: Bạn có thể di chuyển chông gai đến các hố vực và Duplicate (Ctrl+D) để rải xung quanh map!", "Tuyệt vời");
+    }
+
+    private static Sprite LoadSubSprite(string texturePath, string spriteName)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(texturePath);
+        foreach (Object asset in assets)
+        {
+            if (asset is Sprite s && s.name == spriteName)
+            {
+                return s;
+            }
+        }
+        return null;
+    }
 }
