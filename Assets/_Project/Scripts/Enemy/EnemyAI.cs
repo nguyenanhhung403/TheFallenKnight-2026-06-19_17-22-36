@@ -131,7 +131,7 @@ public class EnemyAI : MonoBehaviour
             rb.linearVelocity = new Vector2(step, rb.linearVelocity.y);
 
             // Kiểm tra va chạm vực sâu / tường trước khi đuổi theo để tránh kẹt
-            CheckBoundaries(directionX > 0 ? 1f : -1f);
+            CheckBoundaries(directionX > 0 ? 1f : -1f, true);
 
             if (animator != null && animator.GetCurrentState() != EnemyState.Hit && 
                 animator.GetCurrentState() != EnemyState.AttackA && animator.GetCurrentState() != EnemyState.AttackB)
@@ -232,11 +232,15 @@ public class EnemyAI : MonoBehaviour
         }
 
         // Tránh lao xuống vực hoặc đâm tường khi đang tuần tra
-        CheckBoundaries(directionX);
+        CheckBoundaries(directionX, false);
     }
 
-    private void CheckBoundaries(float directionX)
+    private void CheckBoundaries(float directionX, bool isChasing)
     {
+        // Nếu đang đuổi theo Player, bỏ qua kiểm tra vực/tường để có thể rơi xuống tiếp cận Player,
+        // tránh bị khựng (jitter) đứng im tại rìa vực.
+        if (isChasing) return;
+
         LayerMask groundMask = LayerMask.GetMask("Ground");
         if (playerController != null)
         {
