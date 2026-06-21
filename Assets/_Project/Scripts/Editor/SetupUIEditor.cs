@@ -1345,6 +1345,14 @@ public static class SetupUIEditor
     [MenuItem("Tools/Create Torch C-04 Object")]
     public static void CreateTorchC04Object()
     {
+        string baseDir = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Anim/";
+        
+        // Cấu hình đồng bộ PPU = 16 và Point Filter cho toàn bộ 4 frame đuốc C để tránh lỗi to nhỏ giật giật
+        ConfigureTorchSpritePPU(baseDir + "torch-C-01.png");
+        ConfigureTorchSpritePPU(baseDir + "torch-C-02.png");
+        ConfigureTorchSpritePPU(baseDir + "torch-C-03.png");
+        ConfigureTorchSpritePPU(baseDir + "torch-C-04.png");
+
         // Gọi tạo/tải Sprite hào quang trước tiên để tránh việc import asset làm hỏng tham chiếu đối tượng trong Hierarchy
         Sprite glowSprite = GetOrCreateGlowSprite();
 
@@ -1354,8 +1362,8 @@ public static class SetupUIEditor
 
         // 2. Thêm SpriteRenderer và gán Sprite torch-C-04
         SpriteRenderer sr = torchObj.AddComponent<SpriteRenderer>();
-        string spritePath = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Anim/torch-C-04.png";
-        Sprite torchSprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        string spritePath = baseDir + "torch-C-04.png";
+        Sprite torchSprite = LoadSpriteSafe(spritePath);
         if (torchSprite != null)
         {
             sr.sprite = torchSprite;
@@ -1385,12 +1393,11 @@ public static class SetupUIEditor
         flicker.glowHaloRenderer = haloSr;
         
         // Tải 4 frame hình hoạt họa đuốc C để chạy hoạt hình ngọn lửa
-        string baseDir = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Anim/";
         Sprite[] frames = new Sprite[4];
-        frames[0] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-01.png");
-        frames[1] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-02.png");
-        frames[2] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-03.png");
-        frames[3] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-04.png");
+        frames[0] = LoadSpriteSafe(baseDir + "torch-C-01.png");
+        frames[1] = LoadSpriteSafe(baseDir + "torch-C-02.png");
+        frames[2] = LoadSpriteSafe(baseDir + "torch-C-03.png");
+        frames[3] = LoadSpriteSafe(baseDir + "torch-C-04.png");
         
         flicker.animationFrames = frames;
 
@@ -1401,9 +1408,50 @@ public static class SetupUIEditor
         EditorUtility.DisplayDialog("Thành công", 
             "Đã tạo thành công đối tượng đuốc Torch-C-04 với Hào Quang Giả Lập trong Hierarchy!\n\n" +
             "1. Đã tự động gắn 4 frame Sprite đuốc (hoạt ảnh cháy nhấp nháy).\n" +
-            "2. Đã tự động tạo Child 'Glow_Halo' bằng Sprite Hào quang mềm mại, không cần dùng hệ thống ánh sáng 2D phức tạp.\n" +
-            "3. Hào quang tự bập bùng thay đổi độ mờ ngẫu nhiên cực kỳ tự nhiên.\n\n" +
-            "Gợi ý: Bây giờ bạn có thể Duplicate (Ctrl+D) đuốc để đặt khắp nơi mà không sợ ảnh hưởng đến hiệu năng hoặc lỗi URP!", "Tuyệt vời");
+            "2. Đã tự động cấu hình toàn bộ frame đuốc về PPU = 16 và Point Filter để hiển thị Pixel Art sắc nét, không bị giật kích thước.\n" +
+            "3. Đã tự động tạo Child 'Glow_Halo' bằng Sprite Hào quang mềm mại.\n" +
+            "4. Hào quang tự bập bùng thay đổi độ mờ ngẫu nhiên cực kỳ tự nhiên.\n\n" +
+            "Gợi ý: Bây giờ bạn có thể Duplicate (Ctrl+D) đuốc để đặt khắp nơi!", "Tuyệt vời");
+    }
+
+    private static void ConfigureTorchSpritePPU(string path)
+    {
+        TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer != null)
+        {
+            bool changed = false;
+            if (importer.spritePixelsToUnits != 16)
+            {
+                importer.spritePixelsToUnits = 16;
+                changed = true;
+            }
+            if (importer.filterMode != FilterMode.Point)
+            {
+                importer.filterMode = FilterMode.Point;
+                changed = true;
+            }
+            if (changed)
+            {
+                importer.SaveAndReimport();
+            }
+        }
+    }
+
+    private static Sprite LoadSpriteSafe(string path)
+    {
+        Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (sprite != null) return sprite;
+
+        // Fallback cho chế độ Multiple
+        Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
+        foreach (Object sub in subAssets)
+        {
+            if (sub is Sprite s)
+            {
+                return s;
+            }
+        }
+        return null;
     }
 
     private static Sprite GetOrCreateGlowSprite()
