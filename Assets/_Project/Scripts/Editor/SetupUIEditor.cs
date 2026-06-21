@@ -1341,4 +1341,75 @@ public static class SetupUIEditor
 
         return tilemap;
     }
+
+    [MenuItem("Tools/Create Torch C-04 Object")]
+    public static void CreateTorchC04Object()
+    {
+        // 1. Tạo GameObject Đuốc
+        GameObject torchObj = new GameObject("Torch-C-04");
+        torchObj.transform.position = Vector3.zero;
+
+        // 2. Thêm SpriteRenderer và gán Sprite torch-C-04
+        SpriteRenderer sr = torchObj.AddComponent<SpriteRenderer>();
+        string spritePath = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Anim/torch-C-04.png";
+        Sprite torchSprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        if (torchSprite != null)
+        {
+            sr.sprite = torchSprite;
+            sr.sortingOrder = 5; 
+        }
+        else
+        {
+            Debug.LogWarning($"[TorchSetup] Không tìm thấy sprite đuốc tại: {spritePath}");
+        }
+
+        // 3. Thêm hiệu ứng ánh sáng (Light2D nếu dùng URP, ngược lại là Point Light thường)
+        bool hasURPLight = false;
+#if UNITY_2021_2_OR_NEWER
+        System.Type light2DType = System.Type.GetType("UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime");
+        if (light2DType != null)
+        {
+            Component light2D = torchObj.AddComponent(light2DType);
+            
+            var lightTypeProp = light2DType.GetProperty("lightType");
+            var colorProp = light2DType.GetProperty("color");
+            var intensityProp = light2DType.GetProperty("intensity");
+            var outerRadiusProp = light2DType.GetProperty("pointLightOuterRadius");
+            var innerRadiusProp = light2DType.GetProperty("pointLightInnerRadius");
+
+            if (lightTypeProp != null) lightTypeProp.SetValue(light2D, 0); // 0 = Point
+            if (colorProp != null) colorProp.SetValue(light2D, new Color(1f, 0.45f, 0.1f)); 
+            if (intensityProp != null) intensityProp.SetValue(light2D, 1.2f);
+            if (outerRadiusProp != null) outerRadiusProp.SetValue(light2D, 3.5f);
+            if (innerRadiusProp != null) innerRadiusProp.SetValue(light2D, 0.5f);
+
+            hasURPLight = true;
+            Debug.Log("[TorchSetup] Đã thêm URP Light2D cho Torch-C-04!");
+        }
+#endif
+
+        if (!hasURPLight)
+        {
+            Light pointLight = torchObj.AddComponent<Light>();
+            pointLight.type = LightType.Point;
+            pointLight.color = new Color(1f, 0.45f, 0.1f);
+            pointLight.intensity = 1.2f;
+            pointLight.range = 3.5f;
+            Debug.Log("[TorchSetup] Đã thêm standard Point Light cho Torch-C-04!");
+        }
+
+        // 4. Thêm TorchFlicker script để tạo hiệu ứng lửa nhấp nháy thực tế
+        torchObj.AddComponent<TorchFlicker>();
+
+        // Đăng ký Undo và chọn đối tượng mới tạo trong Hierarchy
+        Undo.RegisterCreatedObjectUndo(torchObj, "Tạo Torch-C-04");
+        Selection.activeGameObject = torchObj;
+
+        EditorUtility.DisplayDialog("Thành công", 
+            "Đã tạo thành công đối tượng đuốc Torch-C-04 trong Hierarchy!\n\n" +
+            "1. Đã tự động gắn Sprite đuốc (Torch-C-04).\n" +
+            "2. Đã tự động tích hợp URP Light2D (hoặc Point Light) màu lửa cam siêu ấm.\n" +
+            "3. Đã gắn script TorchFlicker tạo hiệu ứng bập bùng ngẫu nhiên cực chân thực!\n\n" +
+            "Gợi ý: Bạn có thể kéo đối tượng này vào Project để tạo thành Prefab đuốc và đặt ở khắp mọi nơi trong map!", "Tuyệt vời");
+    }
 }

@@ -59,6 +59,23 @@ public class PlayerController : MonoBehaviour
 
         if (spriteRenderer != null)
             originalColor = spriteRenderer.color;
+
+        // Tạo PhysicsMaterial2D không ma sát gán cho tất cả Collider2D để sửa lỗi dính tường
+        PhysicsMaterial2D noFrictionMaterial = new PhysicsMaterial2D("NoFrictionMaterial");
+        noFrictionMaterial.friction = 0f;
+        noFrictionMaterial.bounciness = 0f;
+
+        Collider2D[] colliders = GetComponents<Collider2D>();
+        foreach (var col in colliders)
+        {
+            col.sharedMaterial = noFrictionMaterial;
+        }
+        
+        Collider2D[] childColliders = GetComponentsInChildren<Collider2D>();
+        foreach (var col in childColliders)
+        {
+            col.sharedMaterial = noFrictionMaterial;
+        }
     }
 
     void Update()
