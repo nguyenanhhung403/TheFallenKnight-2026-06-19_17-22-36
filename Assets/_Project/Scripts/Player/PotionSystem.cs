@@ -243,11 +243,36 @@ public class PotionSystem : MonoBehaviour
 
     private void CreatePotionHUD()
     {
-        Canvas canvas = FindAnyObjectByType<Canvas>();
+        Canvas canvas = null;
+#if UNITY_2022_1_OR_NEWER
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (canvases != null && canvases.Length > 0)
+        {
+            canvas = canvases[0];
+        }
+#else
+        canvas = FindObjectOfType<Canvas>(true);
+#endif
+
         if (canvas == null)
         {
-            Debug.LogError("[PotionSystem] Không tìm thấy Canvas nào trong Scene để tạo Potion HUD!");
-            return;
+            GameObject canvasObj = new GameObject("HUD_Canvas");
+            canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>();
+            canvasObj.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+            if (FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                GameObject esObj = new GameObject("EventSystem");
+                esObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                esObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+            Debug.Log("[PotionSystem] Tự động tạo HUD_Canvas vì không tìm thấy Canvas nào trong Scene.");
+        }
+        else
+        {
+            canvas.gameObject.SetActive(true);
         }
 
         // 1. Tạo Container chính cho Potion HUD
