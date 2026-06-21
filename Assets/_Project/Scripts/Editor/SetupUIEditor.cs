@@ -1,6 +1,9 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEditor.Events;
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
 
 public static class SetupUIEditor
 {
@@ -589,6 +592,405 @@ public static class SetupUIEditor
         catch (System.Exception ex)
         {
             Debug.LogWarning($"[Setup] Không thể tạo Tag '{tag}' tự động: {ex.Message}. Hãy tạo thủ công trong Project Settings nếu cần.");
+        }
+    }
+
+    [MenuItem("Tools/Setup Menus (Dark Fantasy)")]
+    public static void SetupMenus()
+    {
+        // ------------------ 1. CONFIG SPRITES ------------------
+        string menuBgPath = "Assets/_Project/Sprites/UI/dark_fantasy_menu_bg.png";
+        string gameoverBgPath = "Assets/_Project/Sprites/UI/dark_fantasy_gameover_bg.png";
+        ConfigureSpriteImporter(menuBgPath);
+        ConfigureSpriteImporter(gameoverBgPath);
+
+        // Lưu scene hiện tại
+        string originalScenePath = EditorSceneManager.GetActiveScene().path;
+        if (string.IsNullOrEmpty(originalScenePath))
+        {
+            originalScenePath = "Assets/Scenes/SampleScene.unity";
+        }
+        EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
+
+        // ------------------ 2. SETUP GAMEPLAY SCENE UI (PAUSE & GAME OVER) ------------------
+        // Đảm bảo đang mở Gameplay Scene
+        if (EditorSceneManager.GetActiveScene().path != originalScenePath)
+        {
+            EditorSceneManager.OpenScene(originalScenePath);
+        }
+
+        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            GameObject canvasObj = new GameObject("Canvas");
+            canvas = canvasObj.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
+            canvasObj.AddComponent<GraphicRaycaster>();
+            Undo.RegisterCreatedObjectUndo(canvasObj, "Tạo Canvas mới");
+        }
+
+        Transform canvasTransform = canvas.transform;
+
+        // --- SETUP PAUSE MENU ---
+        Transform oldPause = canvasTransform.Find("PauseMenuPanel");
+        if (oldPause != null) Undo.DestroyObjectImmediate(oldPause.gameObject);
+
+        GameObject pausePanelObj = new GameObject("PauseMenuPanel");
+        pausePanelObj.transform.SetParent(canvasTransform, false);
+        RectTransform pauseRect = pausePanelObj.AddComponent<RectTransform>();
+        pauseRect.sizeDelta = new Vector2(600, 500);
+        pauseRect.anchoredPosition = Vector2.zero;
+
+        Image pauseImg = pausePanelObj.AddComponent<Image>();
+        pauseImg.color = new Color(0.05f, 0.05f, 0.05f, 0.92f); // Màu tối âm u
+        
+        Outline pauseOutline = pausePanelObj.AddComponent<Outline>();
+        pauseOutline.effectColor = new Color(0.5f, 0.1f, 0.1f, 0.7f); // Viền đỏ máu
+        pauseOutline.effectDistance = new Vector2(3, -3);
+
+        PauseMenuController pauseCtrl = canvas.gameObject.GetComponent<PauseMenuController>();
+        if (pauseCtrl == null) pauseCtrl = canvas.gameObject.AddComponent<PauseMenuController>();
+        pauseCtrl.pausePanel = pausePanelObj;
+
+        // Title Pause
+        GameObject pauseTitleObj = new GameObject("Title");
+        pauseTitleObj.transform.SetParent(pausePanelObj.transform, false);
+        RectTransform pauseTitleRect = pauseTitleObj.AddComponent<RectTransform>();
+        pauseTitleRect.sizeDelta = new Vector2(500, 80);
+        pauseTitleRect.anchoredPosition = new Vector2(0, 160);
+        Text pauseTitleText = pauseTitleObj.AddComponent<Text>();
+        pauseTitleText.text = "GAME PAUSED";
+        pauseTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        pauseTitleText.fontSize = 48;
+        pauseTitleText.fontStyle = FontStyle.Bold;
+        pauseTitleText.alignment = TextAnchor.MiddleCenter;
+        pauseTitleText.color = new Color(0.7f, 0.1f, 0.1f, 1f);
+        Shadow pauseTitleShadow = pauseTitleObj.AddComponent<Shadow>();
+        pauseTitleShadow.effectColor = Color.black;
+        pauseTitleShadow.effectDistance = new Vector2(3, -3);
+
+        // Pause Buttons
+        Color btnNormalColor = new Color(0.18f, 0.05f, 0.05f, 1f);
+        Color btnHoverColor = new Color(0.35f, 0.08f, 0.08f, 1f);
+
+        GameObject resumeBtnObj = CreateMenuButton(pausePanelObj.transform, "ResumeButton", "CONTINUE", new Vector2(0, 40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20);
+        GameObject mainMenuBtnObj = CreateMenuButton(pausePanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20);
+        GameObject quitBtnObj = CreateMenuButton(pausePanelObj.transform, "QuitButton", "QUIT GAME", new Vector2(0, -120), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20);
+
+        UnityEventTools.AddVoidPersistentListener(resumeBtnObj.GetComponent<Button>().onClick, pauseCtrl.ResumeGame);
+        UnityEventTools.AddVoidPersistentListener(mainMenuBtnObj.GetComponent<Button>().onClick, pauseCtrl.LoadMainMenu);
+        UnityEventTools.AddVoidPersistentListener(quitBtnObj.GetComponent<Button>().onClick, pauseCtrl.QuitGame);
+
+        // --- SETUP GAME OVER MENU ---
+        Transform oldGameOver = canvasTransform.Find("GameOverPanel");
+        if (oldGameOver != null) Undo.DestroyObjectImmediate(oldGameOver.gameObject);
+
+        GameObject goPanelObj = new GameObject("GameOverPanel");
+        goPanelObj.transform.SetParent(canvasTransform, false);
+        RectTransform goRect = goPanelObj.AddComponent<RectTransform>();
+        goRect.anchorMin = Vector2.zero;
+        goRect.anchorMax = Vector2.one;
+        goRect.sizeDelta = Vector2.zero;
+        goRect.anchoredPosition = Vector2.zero;
+
+        Image goImg = goPanelObj.AddComponent<Image>();
+        Sprite gameoverBg = AssetDatabase.LoadAssetAtPath<Sprite>(gameoverBgPath);
+        if (gameoverBg != null)
+        {
+            goImg.sprite = gameoverBg;
+            goImg.color = Color.white;
+        }
+        else
+        {
+            goImg.color = new Color(0.1f, 0.02f, 0.02f, 0.95f);
+        }
+
+        GameOverController goCtrl = canvas.gameObject.GetComponent<GameOverController>();
+        if (goCtrl == null) goCtrl = canvas.gameObject.AddComponent<GameOverController>();
+        goCtrl.gameOverPanel = goPanelObj;
+
+        // Title Game Over
+        GameObject goTitleObj = new GameObject("Title");
+        goTitleObj.transform.SetParent(goPanelObj.transform, false);
+        RectTransform goTitleRect = goTitleObj.AddComponent<RectTransform>();
+        goTitleRect.sizeDelta = new Vector2(800, 150);
+        goTitleRect.anchoredPosition = new Vector2(0, 180);
+        Text goTitleText = goTitleObj.AddComponent<Text>();
+        goTitleText.text = "YOU DIED";
+        goTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        goTitleText.fontSize = 90;
+        goTitleText.fontStyle = FontStyle.Bold;
+        goTitleText.alignment = TextAnchor.MiddleCenter;
+        goTitleText.color = new Color(0.75f, 0.05f, 0.05f, 1f);
+        Shadow goTitleShadow = goTitleObj.AddComponent<Shadow>();
+        goTitleShadow.effectColor = Color.black;
+        goTitleShadow.effectDistance = new Vector2(4, -4);
+
+        // Game Over Buttons
+        Color goBtnNormal = new Color(0.08f, 0.08f, 0.08f, 0.9f);
+        Color goBtnHover = new Color(0.45f, 0.05f, 0.05f, 1f);
+
+        GameObject restartBtnObj = CreateMenuButton(goPanelObj.transform, "RestartButton", "TRY AGAIN", new Vector2(0, -60), new Vector2(350, 70), goBtnNormal, goBtnHover, 24);
+        GameObject goMainMenuBtnObj = CreateMenuButton(goPanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -150), new Vector2(350, 70), goBtnNormal, goBtnHover, 24);
+
+        UnityEventTools.AddVoidPersistentListener(restartBtnObj.GetComponent<Button>().onClick, goCtrl.RestartGame);
+        UnityEventTools.AddVoidPersistentListener(goMainMenuBtnObj.GetComponent<Button>().onClick, goCtrl.LoadMainMenu);
+
+        EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
+        EditorSceneManager.SaveScene(canvas.gameObject.scene);
+
+        // ------------------ 3. SETUP MAIN MENU SCENE ------------------
+        string targetMenuScenePath = "Assets/_Project/Scenes/MainMenuScene.unity";
+        string targetFolder = "Assets/_Project/Scenes";
+        if (!Directory.Exists(targetFolder))
+        {
+            Directory.CreateDirectory(targetFolder);
+        }
+
+        // Tạo scene mới và xây dựng UI
+        var mainMenuScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+        
+        // Tìm Canvas mặc định hoặc tạo mới
+        Canvas menuCanvas = Object.FindAnyObjectByType<Canvas>();
+        if (menuCanvas == null)
+        {
+            GameObject mcObj = new GameObject("Canvas");
+            menuCanvas = mcObj.AddComponent<Canvas>();
+            menuCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            CanvasScaler ms = mcObj.AddComponent<CanvasScaler>();
+            ms.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            ms.referenceResolution = new Vector2(1920, 1080);
+            ms.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            ms.matchWidthOrHeight = 0.5f;
+            mcObj.AddComponent<GraphicRaycaster>();
+        }
+
+        // Background Main Menu
+        GameObject menuBgObj = new GameObject("Background");
+        menuBgObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform menuBgRect = menuBgObj.AddComponent<RectTransform>();
+        menuBgRect.anchorMin = Vector2.zero;
+        menuBgRect.anchorMax = Vector2.one;
+        menuBgRect.sizeDelta = Vector2.zero;
+        menuBgRect.anchoredPosition = Vector2.zero;
+        Image menuBgImg = menuBgObj.AddComponent<Image>();
+        Sprite menuBg = AssetDatabase.LoadAssetAtPath<Sprite>(menuBgPath);
+        if (menuBg != null)
+        {
+            menuBgImg.sprite = menuBg;
+            menuBgImg.color = Color.white;
+        }
+        else
+        {
+            menuBgImg.color = new Color(0.08f, 0.08f, 0.1f, 1f);
+        }
+
+        // Main Menu Controller Manager
+        GameObject menuManager = new GameObject("MainMenuManager");
+        MainMenuController menuCtrl = menuManager.AddComponent<MainMenuController>();
+
+        // Title
+        GameObject menuTitleObj = new GameObject("Title");
+        menuTitleObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform menuTitleRect = menuTitleObj.AddComponent<RectTransform>();
+        menuTitleRect.sizeDelta = new Vector2(1200, 120);
+        menuTitleRect.anchoredPosition = new Vector2(0, 240);
+        Text menuTitleText = menuTitleObj.AddComponent<Text>();
+        menuTitleText.text = "THE FALLEN KNIGHT";
+        menuTitleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        menuTitleText.fontSize = 80;
+        menuTitleText.fontStyle = FontStyle.Bold;
+        menuTitleText.alignment = TextAnchor.MiddleCenter;
+        menuTitleText.color = new Color(0.85f, 0.85f, 0.85f, 1f);
+        Shadow menuTitleShadow = menuTitleObj.AddComponent<Shadow>();
+        menuTitleShadow.effectColor = Color.black;
+        menuTitleShadow.effectDistance = new Vector2(4, -4);
+
+        // Subtitle
+        GameObject menuSubObj = new GameObject("Subtitle");
+        menuSubObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform menuSubRect = menuSubObj.AddComponent<RectTransform>();
+        menuSubRect.sizeDelta = new Vector2(800, 50);
+        menuSubRect.anchoredPosition = new Vector2(0, 160);
+        Text menuSubText = menuSubObj.AddComponent<Text>();
+        menuSubText.text = "Dark Fantasy Chronicles";
+        menuSubText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        menuSubText.fontSize = 26;
+        menuSubText.fontStyle = FontStyle.Italic;
+        menuSubText.alignment = TextAnchor.MiddleCenter;
+        menuSubText.color = new Color(0.6f, 0.05f, 0.05f, 1f);
+        Shadow menuSubShadow = menuSubObj.AddComponent<Shadow>();
+        menuSubShadow.effectColor = Color.black;
+        menuSubShadow.effectDistance = new Vector2(2, -2);
+
+        // Menu Buttons
+        GameObject playBtnObj = CreateMenuButton(menuCanvas.transform, "PlayButton", "PLAY GAME", new Vector2(0, -40), new Vector2(360, 75), goBtnNormal, goBtnHover, 24);
+        GameObject quitGameBtnObj = CreateMenuButton(menuCanvas.transform, "QuitButton", "QUIT GAME", new Vector2(0, -140), new Vector2(360, 75), goBtnNormal, goBtnHover, 24);
+
+        UnityEventTools.AddVoidPersistentListener(playBtnObj.GetComponent<Button>().onClick, menuCtrl.PlayGame);
+        UnityEventTools.AddVoidPersistentListener(quitGameBtnObj.GetComponent<Button>().onClick, menuCtrl.QuitGame);
+
+        // --- CREDITS PANEL (Góc phải màn hình Main Menu) ---
+        GameObject creditsPanelObj = new GameObject("CreditsPanel");
+        creditsPanelObj.transform.SetParent(menuCanvas.transform, false);
+        RectTransform creditsRect = creditsPanelObj.AddComponent<RectTransform>();
+        creditsRect.anchorMin = new Vector2(1, 0); // Bottom-Right
+        creditsRect.anchorMax = new Vector2(1, 0);
+        creditsRect.sizeDelta = new Vector2(400, 280);
+        creditsRect.anchoredPosition = new Vector2(-220, 160);
+
+        Image creditsImg = creditsPanelObj.AddComponent<Image>();
+        creditsImg.color = new Color(0f, 0f, 0f, 0.65f); // Đen mờ u ám
+
+        Outline creditsOutline = creditsPanelObj.AddComponent<Outline>();
+        creditsOutline.effectColor = new Color(0.4f, 0.05f, 0.05f, 0.5f); // Viền đỏ máu nhạt
+        creditsOutline.effectDistance = new Vector2(2, -2);
+
+        // FPTUCT Icon
+        string fptuIconPath = "Assets/IconFPTU/FPTUCT.png";
+        ConfigureSpriteImporter(fptuIconPath);
+        Sprite fptuSprite = AssetDatabase.LoadAssetAtPath<Sprite>(fptuIconPath);
+
+        GameObject fptuIconObj = new GameObject("FPTUIcon");
+        fptuIconObj.transform.SetParent(creditsPanelObj.transform, false);
+        RectTransform fptuRect = fptuIconObj.AddComponent<RectTransform>();
+        fptuRect.anchorMin = new Vector2(0.5f, 1); // Top Center
+        fptuRect.anchorMax = new Vector2(0.5f, 1);
+        fptuRect.sizeDelta = new Vector2(160, 60);
+        fptuRect.anchoredPosition = new Vector2(0, -50);
+
+        Image fptuImg = fptuIconObj.AddComponent<Image>();
+        if (fptuSprite != null)
+        {
+            fptuImg.sprite = fptuSprite;
+            fptuImg.color = Color.white;
+        }
+        else
+        {
+            fptuImg.color = new Color(1, 1, 1, 0.1f);
+        }
+
+        // Members Text
+        GameObject membersObj = new GameObject("MembersText");
+        membersObj.transform.SetParent(creditsPanelObj.transform, false);
+        RectTransform membersRect = membersObj.AddComponent<RectTransform>();
+        membersRect.anchorMin = Vector2.zero;
+        membersRect.anchorMax = Vector2.one;
+        membersRect.sizeDelta = new Vector2(-30, -110); // Lùi lề
+        membersRect.anchoredPosition = new Vector2(0, -45); // Nằm dưới Logo
+
+        Text membersText = membersObj.AddComponent<Text>();
+        membersText.text = "PROJECT MEMBERS:\n" +
+                           "• SE171440 - Hứa Hoàng Minh\n" +
+                           "• SE150834 - Nguyễn Quốc Khánh\n" +
+                           "• Se172559 - Huỳnh Hoàng Tiến\n" +
+                           "• SE160204 - Trương Anh Kiệt";
+        membersText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        membersText.fontSize = 15;
+        membersText.fontStyle = FontStyle.Bold;
+        membersText.alignment = TextAnchor.UpperLeft;
+        membersText.color = new Color(0.85f, 0.85f, 0.85f, 1f);
+        membersText.lineSpacing = 1.3f;
+
+        Shadow membersShadow = membersObj.AddComponent<Shadow>();
+        membersShadow.effectColor = Color.black;
+        membersShadow.effectDistance = new Vector2(2, -2);
+
+        // Đảm bảo có EventSystem trong MainMenuScene để tương tác được các nút
+        UnityEngine.EventSystems.EventSystem eventSystem = Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>();
+        if (eventSystem == null)
+        {
+            GameObject esObj = new GameObject("EventSystem");
+            esObj.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            esObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+        }
+
+        // Lưu scene Main Menu
+        EditorSceneManager.SaveScene(mainMenuScene, targetMenuScenePath);
+
+        // ------------------ 4. UPDATE BUILD SETTINGS ------------------
+        var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+        buildScenes.Add(new EditorBuildSettingsScene(targetMenuScenePath, true));
+        buildScenes.Add(new EditorBuildSettingsScene(originalScenePath, true));
+        EditorBuildSettings.scenes = buildScenes.ToArray();
+
+        // ------------------ 5. RETURN TO ORIGINAL GAMEPLAY SCENE ------------------
+        EditorSceneManager.OpenScene(originalScenePath);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        EditorUtility.DisplayDialog("Thành công", 
+            "Đã khởi tạo hệ thống Giao Diện Dark Fantasy thành công:\n\n" +
+            "1. Cấu hình 2 ảnh nền Gothic tuyệt đẹp (Menu Background & Game Over Background).\n" +
+            "2. Tạo màn hình Tạm dừng (PauseMenuPanel) & Màn hình báo tử (GameOverPanel) trong Gameplay Scene.\n" +
+            "3. Tạo cảnh chứa Menu chính (MainMenuScene.unity) đầy đủ hiệu ứng âm u huyền bí.\n" +
+            "4. Đã tự động cấu hình Build Settings để chạy liên kết giữa các cảnh chơi!\n\n" +
+            "Nhấn Play trong Unity để cảm nhận thành quả!", "Tuyệt vời");
+    }
+
+    private static GameObject CreateMenuButton(Transform parent, string name, string textStr, Vector2 pos, Vector2 size, Color normalColor, Color highlightedColor, int fontSize)
+    {
+        GameObject btnObj = new GameObject(name);
+        btnObj.transform.SetParent(parent, false);
+        
+        RectTransform rect = btnObj.AddComponent<RectTransform>();
+        rect.sizeDelta = size;
+        rect.anchoredPosition = pos;
+
+        Image img = btnObj.AddComponent<Image>();
+        
+        // Tạo nút bấm có hiệu ứng màu chuyển đổi
+        Button btn = btnObj.AddComponent<Button>();
+        btn.targetGraphic = img;
+        btn.transition = Selectable.Transition.ColorTint;
+        
+        ColorBlock colors = btn.colors;
+        colors.normalColor = normalColor;
+        colors.highlightedColor = highlightedColor;
+        colors.pressedColor = new Color(normalColor.r * 0.5f, normalColor.g * 0.5f, normalColor.b * 0.5f, 1f);
+        colors.selectedColor = normalColor;
+        btn.colors = colors;
+
+        // Thêm Text làm con của Button
+        GameObject txtObj = new GameObject("Text");
+        txtObj.transform.SetParent(btnObj.transform, false);
+        RectTransform txtRect = txtObj.AddComponent<RectTransform>();
+        txtRect.anchorMin = Vector2.zero;
+        txtRect.anchorMax = Vector2.one;
+        txtRect.sizeDelta = Vector2.zero;
+
+        Text txt = txtObj.AddComponent<Text>();
+        txt.text = textStr;
+        txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        txt.fontSize = fontSize;
+        txt.fontStyle = FontStyle.Bold;
+        txt.alignment = TextAnchor.MiddleCenter;
+        txt.color = Color.white;
+
+        // Thêm Shadow nhẹ cho chữ trên nút bấm cho đẹp mắt
+        Shadow shadow = txtObj.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0, 0, 0, 0.75f);
+        shadow.effectDistance = new Vector2(2, -2);
+
+        return btnObj;
+    }
+
+    private static void ConfigureSpriteImporter(string path)
+    {
+        TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer != null)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
         }
     }
 }

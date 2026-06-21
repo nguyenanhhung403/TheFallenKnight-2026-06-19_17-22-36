@@ -402,6 +402,18 @@ public class PlayerController : MonoBehaviour
 
         // Khởi chạy Coroutine làm nhân vật bay màu/tan biến dần vào hư vô
         StartCoroutine(FadeOutToNothingness());
+
+        // Hiển thị màn hình Game Over sau 1.5 giây
+        StartCoroutine(TriggerGameOverDelay(1.5f));
+    }
+
+    private System.Collections.IEnumerator TriggerGameOverDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (GameOverController.Instance != null)
+        {
+            GameOverController.Instance.TriggerGameOver();
+        }
     }
 
     private System.Collections.IEnumerator FreezeAnimatorAfterDelay(float delay)
