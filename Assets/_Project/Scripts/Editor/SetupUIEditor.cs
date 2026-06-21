@@ -1366,7 +1366,7 @@ public static class SetupUIEditor
         // 3. Thêm hiệu ứng ánh sáng (Light2D nếu dùng URP, ngược lại là Point Light thường)
         bool hasURPLight = false;
 #if UNITY_2021_2_OR_NEWER
-        System.Type light2DType = System.Type.GetType("UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime");
+        System.Type light2DType = GetLight2DType();
         if (light2DType != null)
         {
             Component light2D = torchObj.AddComponent(light2DType);
@@ -1427,7 +1427,7 @@ public static class SetupUIEditor
     public static void SetupURPDarkAmbient()
     {
         // 1. Tìm xem có Global Light 2D nào chưa
-        System.Type light2DType = System.Type.GetType("UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime");
+        System.Type light2DType = GetLight2DType();
         if (light2DType == null)
         {
             EditorUtility.DisplayDialog("Lỗi", "Dự án hiện tại chưa sử dụng Universal Render Pipeline (URP) hoặc thiếu package Light2D. Hãy cấu hình URP trước khi sử dụng tính năng này!", "OK");
@@ -1512,5 +1512,18 @@ public static class SetupUIEditor
             $"* Đã tạo/cập nhật Global Light 2D về độ sáng 0.15.\n" +
             $"* Đã tự động đổi chất liệu của {updatedCount} đối tượng đồ họa sang Lit Material để có thể nhận và tương tác với ánh sáng từ Đuốc!\n\n" +
             "Hãy chạy game để trải nghiệm hiệu ứng ánh sáng bập bùng tuyệt đẹp!", "Tuyệt vời");
+    }
+
+    private static System.Type GetLight2DType()
+    {
+        foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+        {
+            System.Type type = assembly.GetType("UnityEngine.Rendering.Universal.Light2D");
+            if (type != null)
+            {
+                return type;
+            }
+        }
+        return null;
     }
 }
