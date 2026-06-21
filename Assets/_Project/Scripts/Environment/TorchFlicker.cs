@@ -11,6 +11,13 @@ public class TorchFlicker : MonoBehaviour
 #endif
     private Light pointLight; // Fallback cho 3D Point Light nếu dự án không cài đặt URP 2D
 
+    [Header("Sprite Animation Loop")]
+    public Sprite[] animationFrames;
+    public float frameRate = 0.12f;
+    private SpriteRenderer spriteRenderer;
+    private int currentFrameIndex;
+    private float lastFrameTime;
+
     [Header("Intensity Settings")]
     [Range(0f, 5f)] public float minIntensity = 0.8f;
     [Range(0f, 5f)] public float maxIntensity = 1.3f;
@@ -31,15 +38,28 @@ public class TorchFlicker : MonoBehaviour
         light2D = GetComponent<Light2D>();
 #endif
         pointLight = GetComponent<Light>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
 
         // Thiết lập giá trị ban đầu
         targetIntensity = minIntensity;
         targetRadius = minRadius;
+        lastFrameTime = Time.time;
     }
 
     void Update()
     {
-        // Đến thời điểm cập nhật ngẫu nhiên cường độ mới
+        // 1. Chạy hiệu ứng hoạt hình ngọn lửa cháy (Sprite Animation)
+        if (animationFrames != null && animationFrames.Length > 0 && Time.time - lastFrameTime > frameRate)
+        {
+            currentFrameIndex = (currentFrameIndex + 1) % animationFrames.Length;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = animationFrames[currentFrameIndex];
+            }
+            lastFrameTime = Time.time;
+        }
+
+        // 2. Đến thời điểm cập nhật ngẫu nhiên cường độ sáng mới (Flicker)
         if (Time.time - lastFlickerTime > flickerSpeed)
         {
             targetIntensity = Random.Range(minIntensity, maxIntensity);

@@ -1399,7 +1399,17 @@ public static class SetupUIEditor
         }
 
         // 4. Thêm TorchFlicker script để tạo hiệu ứng lửa nhấp nháy thực tế
-        torchObj.AddComponent<TorchFlicker>();
+        TorchFlicker flicker = torchObj.AddComponent<TorchFlicker>();
+        
+        // Tải 4 frame hình hoạt họa đuốc C để chạy hoạt hình ngọn lửa
+        string baseDir = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Anim/";
+        Sprite[] frames = new Sprite[4];
+        frames[0] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-01.png");
+        frames[1] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-02.png");
+        frames[2] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-03.png");
+        frames[3] = AssetDatabase.LoadAssetAtPath<Sprite>(baseDir + "torch-C-04.png");
+        
+        flicker.animationFrames = frames;
 
         // Đăng ký Undo và chọn đối tượng mới tạo trong Hierarchy
         Undo.RegisterCreatedObjectUndo(torchObj, "Tạo Torch-C-04");
@@ -1411,5 +1421,96 @@ public static class SetupUIEditor
             "2. Đã tự động tích hợp URP Light2D (hoặc Point Light) màu lửa cam siêu ấm.\n" +
             "3. Đã gắn script TorchFlicker tạo hiệu ứng bập bùng ngẫu nhiên cực chân thực!\n\n" +
             "Gợi ý: Bạn có thể kéo đối tượng này vào Project để tạo thành Prefab đuốc và đặt ở khắp mọi nơi trong map!", "Tuyệt vời");
+    }
+
+    [MenuItem("Tools/Setup URP 2D Dark Ambient")]
+    public static void SetupURPDarkAmbient()
+    {
+        // 1. Tìm xem có Global Light 2D nào chưa
+        System.Type light2DType = System.Type.GetType("UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime");
+        if (light2DType == null)
+        {
+            EditorUtility.DisplayDialog("Lỗi", "Dự án hiện tại chưa sử dụng Universal Render Pipeline (URP) hoặc thiếu package Light2D. Hãy cấu hình URP trước khi sử dụng tính năng này!", "OK");
+            return;
+        }
+
+        Component[] allLights = (Component[])Object.FindObjectsOfType(light2DType);
+        Component globalLight = null;
+
+        foreach (var light in allLights)
+        {
+            var lightTypeProp = light2DType.GetProperty("lightType");
+            if (lightTypeProp != null)
+            {
+                int typeVal = (int)lightTypeProp.GetValue(light);
+                if (typeVal == 1) // 1 = Global
+                {
+                    globalLight = light;
+                    break;
+                }
+            }
+        }
+
+        if (globalLight == null)
+        {
+            GameObject glObj = new GameObject("Global Light 2D");
+            globalLight = glObj.AddComponent(light2DType);
+            
+            var lightTypeProp = light2DType.GetProperty("lightType");
+            if (lightTypeProp != null) lightTypeProp.SetValue(globalLight, 1); // Set to Global
+            
+            Undo.RegisterCreatedObjectUndo(glObj, "Tạo Global Light 2D");
+        }
+
+        // 2. Thiết lập ánh sáng môi trường tối (Màu xanh đen huyền ảo, cường độ 0.15f)
+        var colorProp = light2DType.GetProperty("color");
+        var intensityProp = light2DType.GetProperty("intensity");
+        
+        if (colorProp != null) colorProp.SetValue(globalLight, new Color(0.08f, 0.1f, 0.18f)); 
+        if (intensityProp != null) intensityProp.SetValue(globalLight, 0.15f);
+
+        // 3. Đổi Material của các Tilemap Renderer sang Sprite-Lit-Default để có thể nhận ánh sáng
+        TilemapRenderer[] renderers = Object.FindObjectsOfType<TilemapRenderer>();
+        Shader spriteLitShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Lit-Default");
+        Material litMaterial = null;
+        
+        if (spriteLitShader != null)
+        {
+            litMaterial = new Material(spriteLitShader);
+            string matPath = "Assets/_Project/Tilemaps/Sprite-Lit-Default-Shared.mat";
+            string dir = Path.GetDirectoryName(matPath);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            AssetDatabase.CreateAsset(litMaterial, matPath);
+        }
+
+        int updatedCount = 0;
+        if (litMaterial != null)
+        {
+            foreach (var r in renderers)
+            {
+                r.sharedMaterial = litMaterial;
+                updatedCount++;
+            }
+        }
+
+        // Tương tự cho các SpriteRenderer thông thường (như Player, Enemy, Torches)
+        SpriteRenderer[] spriteRenderers = Object.FindObjectsOfType<SpriteRenderer>();
+        if (litMaterial != null)
+        {
+            foreach (var sr in spriteRenderers)
+            {
+                if (sr.sharedMaterial == null || sr.sharedMaterial.name == "Sprites-Default" || sr.sharedMaterial.shader.name == "Sprites/Default")
+                {
+                    sr.sharedMaterial = litMaterial;
+                    updatedCount++;
+                }
+            }
+        }
+
+        EditorUtility.DisplayDialog("Thành công", 
+            $"Đã thiết lập không gian ngục tối (Dark Ambient) thành công!\n\n" +
+            $"* Đã tạo/cập nhật Global Light 2D về độ sáng 0.15.\n" +
+            $"* Đã tự động đổi chất liệu của {updatedCount} đối tượng đồ họa sang Lit Material để có thể nhận và tương tác với ánh sáng từ Đuốc!\n\n" +
+            "Hãy chạy game để trải nghiệm hiệu ứng ánh sáng bập bùng tuyệt đẹp!", "Tuyệt vời");
     }
 }
