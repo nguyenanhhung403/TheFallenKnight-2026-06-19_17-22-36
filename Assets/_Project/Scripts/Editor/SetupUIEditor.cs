@@ -630,10 +630,13 @@ public static class SetupUIEditor
 
         // ------------------ 2. SETUP GAMEPLAY SCENE (Pause & Game Over) ------------------
         string originalScenePath = EditorSceneManager.GetActiveScene().path;
-        if (string.IsNullOrEmpty(originalScenePath))
+        if (!string.IsNullOrEmpty(originalScenePath))
         {
-            originalScenePath = "Assets/_Project/Scenes/SampleScene.unity";
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
         }
+
+        string gameplayScenePath = "Assets/_Project/Scenes/SampleScene.unity";
+        EditorSceneManager.OpenScene(gameplayScenePath, OpenSceneMode.Single);
 
         // Tạo Canvas trong Gameplay Scene nếu chưa có
         Canvas gameplayCanvas = Object.FindAnyObjectByType<Canvas>();
@@ -1199,7 +1202,7 @@ public static class SetupUIEditor
         // ------------------ 4. UPDATE BUILD SETTINGS ------------------
         var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
         string mainMenuScenePath = "Assets/_Project/Scenes/MainMenuScene.unity";
-        string gameplayScenePath = "Assets/_Project/Scenes/SampleScene.unity";
+        gameplayScenePath = "Assets/_Project/Scenes/SampleScene.unity";
 
         buildScenes.Add(new EditorBuildSettingsScene(mainMenuScenePath, true));
         buildScenes.Add(new EditorBuildSettingsScene(gameplayScenePath, true));
