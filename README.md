@@ -51,21 +51,6 @@ Hệ thống âm thanh phân tách kênh BGM (Nhạc nền) và SFX (Hiệu ứn
 
 ---
 
-## 🛠️ Hướng Dẫn Cấu Hình Cho Lập Trình Viên (Developer Guide)
-
-Để thiết lập giao diện và đồng bộ toàn bộ tài nguyên game một cách tự động, nhóm phát triển đã xây dựng công cụ Editor chuyên dụng. Bạn chỉ cần thực hiện các bước sau:
-
-1.  Mở dự án **The Fallen Knight** bằng Unity Editor.
-2.  Trên thanh Menu trên cùng, chọn:
-    👉 **Tools** $\rightarrow$ **Setup Menus (Dark Fantasy)**
-3.  Công cụ sẽ tự động thực hiện:
-    *   Mở cảnh chơi game (`SampleScene`), thiết lập các Canvas Gameplay, Pause Menu, Game Over, và bảng chọn kết cục Boss Defeated Panel.
-    *   Tự động khởi tạo và lưu cảnh màn hình chính (`MainMenuScene`) với đầy đủ hiệu ứng Slideshow giới thiệu cốt truyện & chạy Video Intro chuyển dạng của Boss.
-    *   Tự động cấu hình danh sách cảnh trong **Build Settings** theo đúng thứ tự (`MainMenuScene` ở vị trí số `0` và `SampleScene` ở vị trí số `1`).
-    *   Tự động import và cấu hình định dạng Sprite cho các hình ảnh nền.
-
----
-
 ## 📁 Cấu Trúc Thư Mục Quan Trọng
 ```text
 Assets/
