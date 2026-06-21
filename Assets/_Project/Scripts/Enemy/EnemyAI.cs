@@ -80,12 +80,6 @@ public class EnemyAI : MonoBehaviour
         // Kiểm tra xem Player còn sống không
         bool isPlayerAlive = playerController != null && !playerController.IsDead();
 
-        if (gameObject.name.Contains("Boss") && Time.frameCount % 30 == 0)
-        {
-            float dist = playerTransform != null ? Vector3.Distance(transform.position, playerTransform.position) : -1f;
-            Debug.Log($"[BossAI Debug] Player Alive: {isPlayerAlive}, Player Transform: {(playerTransform != null ? "Found" : "Null")}, Distance: {dist:F2}, ChaseRange: {chaseRange}, AttackRange: {attackRange}, Velocity: {rb.linearVelocity}");
-        }
-
         if (isPlayerAlive && Vector3.Distance(transform.position, playerTransform.position) <= chaseRange)
         {
             // Trạng thái đuổi theo và tấn công Player
