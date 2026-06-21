@@ -1345,6 +1345,9 @@ public static class SetupUIEditor
     [MenuItem("Tools/Create Torch C-04 Object")]
     public static void CreateTorchC04Object()
     {
+        // Gọi tạo/tải Sprite hào quang trước tiên để tránh việc import asset làm hỏng tham chiếu đối tượng trong Hierarchy
+        Sprite glowSprite = GetOrCreateGlowSprite();
+
         // 1. Tạo GameObject Đuốc
         GameObject torchObj = new GameObject("Torch-C-04");
         torchObj.transform.position = Vector3.zero;
@@ -1370,7 +1373,6 @@ public static class SetupUIEditor
         haloObj.transform.localScale = new Vector3(3.5f, 3.5f, 1f); 
 
         SpriteRenderer haloSr = haloObj.AddComponent<SpriteRenderer>();
-        Sprite glowSprite = GetOrCreateGlowSprite();
         if (glowSprite != null)
         {
             haloSr.sprite = glowSprite;
