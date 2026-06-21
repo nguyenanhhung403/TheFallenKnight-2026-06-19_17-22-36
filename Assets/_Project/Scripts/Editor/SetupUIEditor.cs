@@ -1169,68 +1169,117 @@ public static class SetupUIEditor
             }
         }
 
-        // Thêm các quy tắc bo viền 9-slice
-        // 1. Top-Left Corner
+        // Thêm các quy tắc bo viền 9-slice linh hoạt (16 quy tắc để vẽ được cả cột dọc, cầu ngang mỏng và căn phòng rỗng)
+        // 1. Single Floating Tile (Bốn phía đều trống)
+        AddRule(spTopCenter, new int[] {
+            2, 2, 2,
+            2,    2,
+            2, 2, 2
+        });
+
+        // 2. Thin Horizontal Platform Left End (Trái trống, Trên trống, Dưới trống, Phải có)
+        AddRule(spTopLeft, new int[] {
+            2, 2, 2,
+            2,    1,
+            2, 2, 2
+        });
+
+        // 3. Thin Horizontal Platform Right End (Phải trống, Trên trống, Dưới trống, Trái có)
+        AddRule(spTopRight, new int[] {
+            2, 2, 2,
+            1,    2,
+            2, 2, 2
+        });
+
+        // 4. Thin Horizontal Platform Middle (Trên trống, Dưới trống, Trái/Phải có)
+        AddRule(spTopCenter, new int[] {
+            2, 2, 2,
+            1,    1,
+            2, 2, 2
+        });
+
+        // 5. Thin Vertical Wall Top End (Trên trống, Trái/Phải trống, Dưới có)
+        AddRule(spTopCenter, new int[] {
+            2, 2, 2,
+            2,    2,
+            0, 1, 0
+        });
+
+        // 6. Thin Vertical Wall Bottom End (Dưới trống, Trái/Phải trống, Trên có)
+        AddRule(spBottomCenter, new int[] {
+            0, 1, 0,
+            2,    2,
+            2, 2, 2
+        });
+
+        // 7. Thin Vertical Wall Middle (Trái/Phải trống, Trên/Dưới có)
+        AddRule(spMiddleLeft, new int[] {
+            2, 1, 2,
+            2,    2,
+            2, 1, 2
+        });
+
+        // 8. Top-Left Corner
         AddRule(spTopLeft, new int[] {
             2, 2, 0,
             2,    1,
             0, 1, 1
         });
 
-        // 2. Top-Center
-        AddRule(spTopCenter, new int[] {
-            2, 2, 2,
-            1,    1,
-            1, 1, 1
-        });
-
-        // 3. Top-Right Corner
+        // 9. Top-Right Corner
         AddRule(spTopRight, new int[] {
             0, 2, 2,
             1,    2,
             1, 1, 0
         });
 
-        // 4. Left Wall
-        AddRule(spMiddleLeft, new int[] {
-            2, 1, 1,
-            2,    1,
-            2, 1, 1
-        });
-
-        // 5. Center Dirt
-        AddRule(spMiddleCenter, new int[] {
-            1, 1, 1,
+        // 10. Top-Center
+        AddRule(spTopCenter, new int[] {
+            2, 2, 2,
             1,    1,
             1, 1, 1
         });
 
-        // 6. Right Wall
-        AddRule(spMiddleRight, new int[] {
-            1, 1, 2,
-            1,    2,
-            1, 1, 2
-        });
-
-        // 7. Bottom-Left Corner
+        // 11. Bottom-Left Corner
         AddRule(spBottomLeft, new int[] {
             0, 1, 1,
             2,    1,
             2, 2, 0
         });
 
-        // 8. Bottom-Center
+        // 12. Bottom-Right Corner
+        AddRule(spBottomRight, new int[] {
+            1, 1, 0,
+            1,    2,
+            0, 2, 2
+        });
+
+        // 13. Bottom-Center (Ceiling)
         AddRule(spBottomCenter, new int[] {
             1, 1, 1,
             1,    1,
             2, 2, 2
         });
 
-        // 9. Bottom-Right Corner
-        AddRule(spBottomRight, new int[] {
-            1, 1, 0,
+        // 14. Left Wall
+        AddRule(spMiddleLeft, new int[] {
+            2, 1, 1,
+            2,    1,
+            2, 1, 1
+        });
+
+        // 15. Right Wall
+        AddRule(spMiddleRight, new int[] {
+            1, 1, 2,
             1,    2,
-            0, 2, 2
+            1, 1, 2
+        });
+
+        // 16. Center Dirt (Lòng đất)
+        AddRule(spMiddleCenter, new int[] {
+            1, 1, 1,
+            1,    1,
+            1, 1, 1
         });
 
         // 5. Tạo file Asset lưu trữ
