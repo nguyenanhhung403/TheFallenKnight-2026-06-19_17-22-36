@@ -632,7 +632,7 @@ public static class SetupUIEditor
         string originalScenePath = EditorSceneManager.GetActiveScene().path;
         if (string.IsNullOrEmpty(originalScenePath))
         {
-            originalScenePath = "Assets/Scenes/SampleScene.unity";
+            originalScenePath = "Assets/_Project/Scenes/SampleScene.unity";
         }
 
         // Tạo Canvas trong Gameplay Scene nếu chưa có
@@ -1199,7 +1199,7 @@ public static class SetupUIEditor
         // ------------------ 4. UPDATE BUILD SETTINGS ------------------
         var buildScenes = new System.Collections.Generic.List<EditorBuildSettingsScene>();
         string mainMenuScenePath = "Assets/_Project/Scenes/MainMenuScene.unity";
-        string gameplayScenePath = "Assets/Scenes/SampleScene.unity";
+        string gameplayScenePath = "Assets/_Project/Scenes/SampleScene.unity";
 
         buildScenes.Add(new EditorBuildSettingsScene(mainMenuScenePath, true));
         buildScenes.Add(new EditorBuildSettingsScene(gameplayScenePath, true));
