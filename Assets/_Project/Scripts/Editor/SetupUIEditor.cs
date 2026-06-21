@@ -1083,42 +1083,78 @@ public static class SetupUIEditor
         string texturePath = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/main_lev_build.png";
         Object[] assets = AssetDatabase.LoadAllAssetsAtPath(texturePath);
         
-        System.Collections.Generic.Dictionary<string, Sprite> spriteDict = new System.Collections.Generic.Dictionary<string, Sprite>();
+        System.Collections.Generic.List<Sprite> spriteList = new System.Collections.Generic.List<Sprite>();
         foreach (var asset in assets)
         {
             if (asset is Sprite sprite)
             {
-                spriteDict[sprite.name] = sprite;
+                spriteList.Add(sprite);
             }
         }
 
-        if (spriteDict.Count == 0)
+        if (spriteList.Count == 0)
         {
-            EditorUtility.DisplayDialog("Lỗi", "Không tìm thấy sprite nào được cắt trong main_lev_build.png!", "OK");
+            EditorUtility.DisplayDialog("Lỗi", "Không tìm thấy sprite nào được cắt trong main_lev_build.png! Hãy đảm bảo đã chỉnh Texture Import Settings thành Multiple và Sprite Editor đã slice 16x16.", "OK");
             return;
         }
 
-        // 3. Cấu hình các sprite mặc định
-        if (spriteDict.TryGetValue("main_lev_build_2", out Sprite defaultSprite))
+        // Hàm helper để tìm Sprite theo tọa độ x, y chính xác
+        Sprite FindSpriteAt(float x, float y)
         {
-            ruleTile.m_DefaultSprite = defaultSprite;
+            foreach (var s in spriteList)
+            {
+                // Kiểm tra sai số nhỏ do định dạng float
+                if (Mathf.Abs(s.rect.x - x) < 1f && Mathf.Abs(s.rect.y - y) < 1f)
+                {
+                    return s;
+                }
+            }
+            return null;
         }
-        else if (spriteDict.TryGetValue("main_lev_build_0", out defaultSprite))
+
+        // Lấy các Sprite theo tọa độ 16x16 trên tấm ảnh gốc
+        Sprite spTopLeft = FindSpriteAt(32f, 1216f);
+        Sprite spTopCenter = FindSpriteAt(48f, 1216f);
+        Sprite spTopRight = FindSpriteAt(64f, 1216f);
+        
+        Sprite spMiddleLeft = FindSpriteAt(32f, 1200f);
+        Sprite spMiddleCenter = FindSpriteAt(48f, 1200f);
+        Sprite spMiddleRight = FindSpriteAt(64f, 1200f);
+        
+        Sprite spBottomLeft = FindSpriteAt(32f, 1168f);
+        Sprite spBottomCenter = FindSpriteAt(48f, 1168f);
+        Sprite spBottomRight = FindSpriteAt(64f, 1168f);
+
+        // Fallback dùng tên/chỉ số nếu không tìm thấy bằng tọa độ (trong trường hợp cách slice khác)
+        if (spTopCenter == null)
         {
-            ruleTile.m_DefaultSprite = defaultSprite;
+            System.Collections.Generic.Dictionary<string, Sprite> spriteDict = new System.Collections.Generic.Dictionary<string, Sprite>();
+            foreach (var s in spriteList) spriteDict[s.name] = s;
+
+            spriteDict.TryGetValue("main_lev_build_2", out spTopCenter);
+            spriteDict.TryGetValue("main_lev_build_1", out spTopLeft);
+            spriteDict.TryGetValue("main_lev_build_3", out spTopRight);
+            spriteDict.TryGetValue("main_lev_build_60", out spMiddleLeft);
+            spriteDict.TryGetValue("main_lev_build_61", out spMiddleCenter);
+            spriteDict.TryGetValue("main_lev_build_62", out spMiddleRight);
+            spriteDict.TryGetValue("main_lev_build_147", out spBottomLeft);
+            spriteDict.TryGetValue("main_lev_build_148", out spBottomCenter);
+            spriteDict.TryGetValue("main_lev_build_149", out spBottomRight);
         }
+
+        // Đặt hình hiển thị mặc định
+        ruleTile.m_DefaultSprite = spTopCenter != null ? spTopCenter : (spriteList.Count > 0 ? spriteList[0] : null);
 
         // 4. Định nghĩa danh sách các quy tắc (Tiling Rules)
         ruleTile.m_TilingRules = new System.Collections.Generic.List<RuleTile.TilingRule>();
 
-        // Thiết lập các sprite tương ứng cho quy tắc 9-slice
-        // Vị trí m_Neighbors trong RuleTile (8 neighbors):
+        // Quy tắc neighbors của RuleTile (8 neighbors):
         // 0: NW, 1: N, 2: NE, 3: W, 4: E, 5: SW, 6: S, 7: SE
         // Giá trị: DontCare = 0, This = 1, NotThis = 2
 
-        void AddRule(string spriteName, int[] neighbors)
+        void AddRule(Sprite sprite, int[] neighbors)
         {
-            if (spriteDict.TryGetValue(spriteName, out Sprite sprite))
+            if (sprite != null)
             {
                 RuleTile.TilingRule rule = new RuleTile.TilingRule();
                 rule.m_Sprites = new Sprite[] { sprite };
@@ -1133,65 +1169,65 @@ public static class SetupUIEditor
             }
         }
 
-        // Dưới đây là bộ quy tắc chuẩn cho 9-slice tilemap (This = 1, NotThis = 2, DontCare = 0)
-        // 1. Top-Left Corner (viền góc trên-trái)
-        AddRule("main_lev_build_0", new int[] {
+        // Thêm các quy tắc bo viền 9-slice
+        // 1. Top-Left Corner
+        AddRule(spTopLeft, new int[] {
             2, 2, 0,
             2,    1,
             0, 1, 1
         });
 
-        // 2. Top-Center (mặt đất ở giữa)
-        AddRule("main_lev_build_2", new int[] {
+        // 2. Top-Center
+        AddRule(spTopCenter, new int[] {
             2, 2, 2,
             1,    1,
             1, 1, 1
         });
 
-        // 3. Top-Right Corner (viền góc trên-phải)
-        AddRule("main_lev_build_4", new int[] {
+        // 3. Top-Right Corner
+        AddRule(spTopRight, new int[] {
             0, 2, 2,
             1,    2,
             1, 1, 0
         });
 
-        // 4. Left Wall (viền vách đá bên trái)
-        AddRule("main_lev_build_12", new int[] {
+        // 4. Left Wall
+        AddRule(spMiddleLeft, new int[] {
             2, 1, 1,
             2,    1,
             2, 1, 1
         });
 
-        // 5. Center Dirt (lòng đất bên dưới)
-        AddRule("main_lev_build_15", new int[] {
+        // 5. Center Dirt
+        AddRule(spMiddleCenter, new int[] {
             1, 1, 1,
             1,    1,
             1, 1, 1
         });
 
-        // 6. Right Wall (viền vách đá bên phải)
-        AddRule("main_lev_build_14", new int[] {
+        // 6. Right Wall
+        AddRule(spMiddleRight, new int[] {
             1, 1, 2,
             1,    2,
             1, 1, 2
         });
 
-        // 7. Bottom-Left Corner (góc dưới-trái)
-        AddRule("main_lev_build_24", new int[] {
+        // 7. Bottom-Left Corner
+        AddRule(spBottomLeft, new int[] {
             0, 1, 1,
             2,    1,
             2, 2, 0
         });
 
-        // 8. Bottom-Center (lớp đất đáy)
-        AddRule("main_lev_build_25", new int[] {
+        // 8. Bottom-Center
+        AddRule(spBottomCenter, new int[] {
             1, 1, 1,
             1,    1,
             2, 2, 2
         });
 
-        // 9. Bottom-Right Corner (góc dưới-phải)
-        AddRule("main_lev_build_26", new int[] {
+        // 9. Bottom-Right Corner
+        AddRule(spBottomRight, new int[] {
             1, 1, 0,
             1,    2,
             0, 2, 2
@@ -1210,7 +1246,7 @@ public static class SetupUIEditor
         AssetDatabase.Refresh();
 
         EditorUtility.DisplayDialog("Thành công", 
-            $"Đã tạo thành công Ground_RuleTile tại:\n{savePath}\n\n" +
+            $"Đã tạo thành công Ground_RuleTile (16x16) tại:\n{savePath}\n\n" +
             "Cách sử dụng:\n" +
             "1. Kéo tệp Ground_RuleTile này vào cửa sổ Tile Palette của bạn.\n" +
             "2. Sử dụng cọ vẽ (Brush) chọn Rule Tile này để vẽ địa hình trong Scene view. Unity sẽ tự động bo viền cỏ, vách đá, lòng đất cực kỳ thông minh!", "Tuyệt vời");
