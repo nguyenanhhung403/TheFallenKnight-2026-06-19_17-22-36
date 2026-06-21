@@ -3,6 +3,7 @@ using UnityEditor.SceneManagement;
 using UnityEditor.Events;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Tilemaps;
 using System.IO;
 
 public static class SetupUIEditor
@@ -991,6 +992,313 @@ public static class SetupUIEditor
             importer.filterMode = FilterMode.Bilinear;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
+        }
+    }
+
+    [MenuItem("Tools/Generate Beautiful Level (Tileset)")]
+    public static void GenerateBeautifulLevel()
+    {
+        // 1. Tìm hoặc tạo Grid
+        Grid grid = Object.FindAnyObjectByType<Grid>();
+        GameObject gridObj;
+        if (grid == null)
+        {
+            gridObj = new GameObject("Grid");
+            gridObj.transform.position = Vector3.zero;
+            gridObj.AddComponent<Grid>();
+            Undo.RegisterCreatedObjectUndo(gridObj, "Tạo Grid mới");
+        }
+        else
+        {
+            gridObj = grid.gameObject;
+        }
+
+        // 2. Tạo hoặc cấu hình 3 Layer Tilemap: Ground, Background, Decorations
+        Tilemap groundMap = SetupTilemapLayer(gridObj.transform, "Tilemap_Ground", 0, true);
+        Tilemap bgMap = SetupTilemapLayer(gridObj.transform, "Tilemap_Background", -10, false);
+        Tilemap decorMap = SetupTilemapLayer(gridObj.transform, "Tilemap_Decorations", 5, false);
+
+        if (groundMap == null || bgMap == null || decorMap == null)
+        {
+            EditorUtility.DisplayDialog("Lỗi", "Không thể khởi tạo các lớp Tilemap!", "OK");
+            return;
+        }
+
+        // 3. Tải các Tile Assets
+        string tilemapPath = "Assets/_Project/Tilemaps/";
+        // Tải các tile mẫu tiêu biểu
+        Tile tileGrassLeft = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_0.asset"); // Góc trái
+        Tile tileGrassCenter = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_2.asset"); // Mặt đất ở giữa
+        Tile tileGrassRight = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_4.asset"); // Góc phải
+        Tile tileDirtCenter = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_15.asset"); // Đất ở dưới
+        Tile tilePlatformLeft = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_62.asset");
+        Tile tilePlatformCenter = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_63.asset");
+        Tile tilePlatformRight = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_64.asset");
+        Tile tileWallBrick = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_12.asset");
+        Tile tileDecorFence = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_124.asset");
+        Tile tileDecorGrass = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_135.asset");
+
+        // Fallback phòng hờ nếu không load được từ _Project/Tilemaps
+        if (tileGrassCenter == null)
+        {
+            tilemapPath = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/";
+            tileGrassLeft = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_0.asset");
+            tileGrassCenter = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_2.asset");
+            tileGrassRight = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_4.asset");
+            tileDirtCenter = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_15.asset");
+            tilePlatformLeft = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_62.asset");
+            tilePlatformCenter = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_63.asset");
+            tilePlatformRight = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_64.asset");
+            tileWallBrick = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_12.asset");
+            tileDecorFence = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_124.asset");
+            tileDecorGrass = AssetDatabase.LoadAssetAtPath<Tile>(tilemapPath + "main_lev_build_135.asset");
+        }
+
+        if (tileGrassCenter == null)
+        {
+            // Tìm ngẫu nhiên một tile trong thư mục để người chơi có cái test
+            string[] guids = AssetDatabase.FindAssets("t:Tile");
+            if (guids.Length > 0)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                tileGrassCenter = AssetDatabase.LoadAssetAtPath<Tile>(path);
+                tileDirtCenter = tileGrassCenter;
+                tileGrassLeft = tileGrassCenter;
+                tileGrassRight = tileGrassCenter;
+            }
+        }
+
+        if (tileGrassCenter == null)
+        {
+            EditorUtility.DisplayDialog("Lỗi", "Không tìm thấy bất kỳ tệp Tile nào trong dự án. Vui lòng tạo Tile Palette hoặc import asset trước!", "OK");
+            return;
+        }
+
+        // 4. Xóa các vị trí gạch cũ trước khi vẽ mới để tránh trùng lặp đè lên nhau
+        groundMap.ClearAllTiles();
+        bgMap.ClearAllTiles();
+        decorMap.ClearAllTiles();
+
+        // 5. Thiết kế Layout bản đồ (Vẽ địa hình Ground)
+        // Vùng đất xuất phát (X: -25 đến -6, Y: -4)
+        DrawHorizontalFloor(groundMap, -25, -6, -4, tileGrassLeft, tileGrassCenter, tileGrassRight, tileDirtCenter, 3);
+        // Vùng đất giữa (X: 0 đến 14, Y: -4)
+        DrawHorizontalFloor(groundMap, 0, 14, -4, tileGrassLeft, tileGrassCenter, tileGrassRight, tileDirtCenter, 3);
+        // Vùng đất kết thúc (X: 20 đến 42, Y: -4)
+        DrawHorizontalFloor(groundMap, 20, 42, -4, tileGrassLeft, tileGrassCenter, tileGrassRight, tileDirtCenter, 3);
+
+        // Các nền tảng lơ lửng ở giữa khoảng trống (vùng nhảy vượt chướng ngại vật)
+        // Nền tảng 1 (giữa vùng đất 1 và vùng đất 2): X: -5 đến -1, Y: -1
+        DrawPlatform(groundMap, -5, -1, -1, tilePlatformLeft, tilePlatformCenter, tilePlatformRight);
+        // Nền tảng 2 (giữa vùng đất 2 và vùng đất 3): X: 15 đến 19, Y: -1
+        DrawPlatform(groundMap, 15, 19, -1, tilePlatformLeft, tilePlatformCenter, tilePlatformRight);
+
+        // Vùng bậc cao (Castle Ruins / Ledges) ở bên phải để trèo lên
+        DrawHorizontalFloor(groundMap, 26, 38, 1, tileGrassLeft, tileGrassCenter, tileGrassRight, tileDirtCenter, 2);
+        DrawHorizontalFloor(groundMap, 30, 38, 5, tileGrassLeft, tileGrassCenter, tileGrassRight, tileDirtCenter, 2);
+
+        // Trụ tường thành u ám ở các góc đất
+        DrawVerticalWall(groundMap, -25, -3, 6, tileWallBrick);
+        DrawVerticalWall(groundMap, 42, -3, 8, tileWallBrick);
+
+        // 6. Vẽ một số trang trí (Decorations)
+        if (tileDecorFence != null)
+        {
+            decorMap.SetTile(new Vector3Int(-15, -3, 0), tileDecorFence);
+            decorMap.SetTile(new Vector3Int(-14, -3, 0), tileDecorFence);
+            decorMap.SetTile(new Vector3Int(5, -3, 0), tileDecorFence);
+            decorMap.SetTile(new Vector3Int(6, -3, 0), tileDecorFence);
+        }
+        if (tileDecorGrass != null)
+        {
+            decorMap.SetTile(new Vector3Int(-20, -3, 0), tileDecorGrass);
+            decorMap.SetTile(new Vector3Int(-10, -3, 0), tileDecorGrass);
+            decorMap.SetTile(new Vector3Int(2, -3, 0), tileDecorGrass);
+            decorMap.SetTile(new Vector3Int(12, -3, 0), tileDecorGrass);
+            decorMap.SetTile(new Vector3Int(25, -3, 0), tileDecorGrass);
+            decorMap.SetTile(new Vector3Int(27, 2, 0), tileDecorGrass);
+        }
+
+        // 7. Tạo hoặc gán Background phía sau (Aesthetic Parallax Backdrop)
+        string bgImgPath = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Background/03 background A.png";
+        if (!File.Exists(bgImgPath)) bgImgPath = "Assets/_Project/Sprites/Environment/PixelPlatformerSet1v.1.1/Background/01 background.png";
+        
+        Sprite bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>(bgImgPath);
+        if (bgSprite != null)
+        {
+            Transform oldBg = gridObj.transform.Find("ParallaxBackground");
+            if (oldBg != null) Undo.DestroyObjectImmediate(oldBg.gameObject);
+
+            GameObject bgSpriteObj = new GameObject("ParallaxBackground");
+            bgSpriteObj.transform.SetParent(gridObj.transform, false);
+            bgSpriteObj.transform.position = new Vector3(8f, 2f, 10f); // Đưa ra sau cùng
+            
+            // Vẽ lặp hình nền
+            SpriteRenderer bgSR = bgSpriteObj.AddComponent<SpriteRenderer>();
+            bgSR.sprite = bgSprite;
+            bgSR.drawMode = SpriteDrawMode.Tiled;
+            bgSR.size = new Vector2(100f, 30f);
+            bgSR.color = new Color(0.4f, 0.4f, 0.4f, 1f); // Giảm sáng cho u ám
+            bgSR.sortingOrder = -20;
+            
+            Undo.RegisterCreatedObjectUndo(bgSpriteObj, "Tạo Parallax Background");
+        }
+
+        // 8. Định vị lại Player & Camera & Enemies để khớp với map vừa vẽ
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) player = GameObject.Find("Player");
+        if (player != null)
+        {
+            Undo.RecordObject(player.transform, "Định vị Player");
+            player.transform.position = new Vector3(-20f, -2.5f, 0f);
+            Debug.Log("[LevelGenerator] Đã đặt lại vị trí xuất phát của Player về (-20, -2.5, 0).");
+        }
+
+        // 9. Phân bổ quái vật (Enemies) & Bình máu (Potions) lên các thềm đất mới
+        RepositionGameObjectsOnNewPlatforms();
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        
+        EditorUtility.DisplayDialog("Thành công", 
+            "Đã vẽ bản đồ tự động hoàn tất:\n\n" +
+            "1. Grid & các lớp Tilemap (Ground, Background, Decorations) được cấu hình chuẩn.\n" +
+            "2. Đã tự động tạo các nền đất nhảy, hố sâu thử thách, bậc trèo tường thành.\n" +
+            "3. Layer 'Tilemap_Ground' đã được gắn CompositeCollider2D hỗ trợ va chạm mượt mà.\n" +
+            "4. Đã tự động sắp xếp lại vị trí của Player, Enemy và bình thuốc lên địa hình mới!\n\n" +
+            "Hãy mở cửa sổ Tile Palette (Window -> 2D -> Tile Palette) để tự do vẽ thêm trang trí!", "Tuyệt vời");
+    }
+
+    private static Tilemap SetupTilemapLayer(Transform parent, string name, int sortingOrder, bool hasCollider)
+    {
+        Transform child = parent.Find(name);
+        GameObject layerObj;
+        if (child != null)
+        {
+            layerObj = child.gameObject;
+        }
+        else
+        {
+            layerObj = new GameObject(name);
+            layerObj.transform.SetParent(parent, false);
+            Undo.RegisterCreatedObjectUndo(layerObj, "Tạo Layer " + name);
+        }
+
+        Tilemap tilemap = layerObj.GetComponent<Tilemap>();
+        if (tilemap == null) tilemap = layerObj.AddComponent<Tilemap>();
+
+        TilemapRenderer renderer = layerObj.GetComponent<TilemapRenderer>();
+        if (renderer == null) renderer = layerObj.AddComponent<TilemapRenderer>();
+        renderer.sortingOrder = sortingOrder;
+
+        if (hasCollider)
+        {
+            TilemapCollider2D collider = layerObj.GetComponent<TilemapCollider2D>();
+            if (collider == null) collider = layerObj.AddComponent<TilemapCollider2D>();
+            
+            CompositeCollider2D composite = layerObj.GetComponent<CompositeCollider2D>();
+            if (composite == null) composite = layerObj.AddComponent<CompositeCollider2D>();
+            
+            Rigidbody2D rb = layerObj.GetComponent<Rigidbody2D>();
+            if (rb == null) rb = layerObj.AddComponent<Rigidbody2D>();
+            
+            rb.bodyType = RigidbodyType2D.Static;
+            collider.usedByComposite = true;
+            composite.geometryType = CompositeCollider2D.GeometryType.Outlines;
+        }
+
+        return tilemap;
+    }
+
+    private static void DrawHorizontalFloor(Tilemap map, int startX, int endX, int y, Tile leftTile, Tile centerTile, Tile rightTile, Tile dirtTile, int dirtDepth)
+    {
+        for (int x = startX; x <= endX; x++)
+        {
+            Tile topTile = centerTile;
+            if (x == startX) topTile = leftTile;
+            else if (x == endX) topTile = rightTile;
+
+            map.SetTile(new Vector3Int(x, y, 0), topTile);
+
+            // Vẽ các lớp đất sâu bên dưới
+            for (int d = 1; d <= dirtDepth; d++)
+            {
+                map.SetTile(new Vector3Int(x, y - d, 0), dirtTile);
+            }
+        }
+    }
+
+    private static void DrawPlatform(Tilemap map, int startX, int endX, int y, Tile leftTile, Tile centerTile, Tile rightTile)
+    {
+        for (int x = startX; x <= endX; x++)
+        {
+            Tile platTile = centerTile;
+            if (x == startX) platTile = leftTile;
+            else if (x == endX) platTile = rightTile;
+
+            map.SetTile(new Vector3Int(x, y, 0), platTile);
+        }
+    }
+
+    private static void DrawVerticalWall(Tilemap map, int x, int startY, int height, Tile wallTile)
+    {
+        if (wallTile == null) return;
+        for (int y = startY; y < startY + height; y++)
+        {
+            map.SetTile(new Vector3Int(x, y, 0), wallTile);
+        }
+    }
+
+    private static void RepositionGameObjectsOnNewPlatforms()
+    {
+        // 1. Phân bổ lại Enemies
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        int enemyIndex = 0;
+        foreach (GameObject enemy in enemies)
+        {
+            Undo.RecordObject(enemy.transform, "Định vị Enemy");
+            if (enemyIndex == 0)
+            {
+                enemy.transform.position = new Vector3(5f, -2.5f, 0f); // Trên vùng đất giữa
+            }
+            else if (enemyIndex == 1)
+            {
+                enemy.transform.position = new Vector3(25f, -2.5f, 0f); // Trên vùng đất cuối
+            }
+            else if (enemyIndex == 2)
+            {
+                enemy.transform.position = new Vector3(32f, 2.5f, 0f); // Trên thềm cao bậc 1
+            }
+            else
+            {
+                enemy.transform.position = new Vector3(35f, 6.5f, 0f); // Trên thềm cao bậc 2
+            }
+            enemyIndex++;
+        }
+
+        // 2. Phân bổ lại Potions (nếu có trong Scene)
+        CollectibleItem[] collectibles = Object.FindObjectsOfType<CollectibleItem>();
+        int potIndex = 0;
+        foreach (var item in collectibles)
+        {
+            Undo.RecordObject(item.transform, "Định vị Potion");
+            if (potIndex == 0)
+            {
+                item.transform.position = new Vector3(-10f, -2.8f, 0f);
+            }
+            else if (potIndex == 1)
+            {
+                item.transform.position = new Vector3(8f, -2.8f, 0f);
+            }
+            else if (potIndex == 2)
+            {
+                item.transform.position = new Vector3(36f, 6.2f, 0f);
+            }
+            else
+            {
+                item.transform.position = new Vector3(-3f, 0.2f, 0f); // Trên platform lơ lửng thứ 1
+            }
+            potIndex++;
         }
     }
 }
