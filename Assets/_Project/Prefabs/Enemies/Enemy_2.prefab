@@ -247,9 +247,9 @@ MonoBehaviour:
   currentHealth: 0
   baseDamage: 14
   dropProbability: 0.15
-  healthPotionPrefab: {fileID: 242530987971977531, guid: 6de43fd3ef7bb7b43b866205a88621ea, type: 3}
-  manaPotionPrefab: {fileID: 4089464506906459819, guid: d172e0df18d9da0488e44cfbc98869f1, type: 3}
-  speedPotionPrefab: {fileID: 4129971741466602374, guid: 8a1fed5fca35eb74f84b2db22e597a7f, type: 3}
+  healthPotionPrefab: {fileID: 2922482604950204720, guid: 6de43fd3ef7bb7b43b866205a88621ea, type: 3}
+  manaPotionPrefab: {fileID: 1932585788568680971, guid: d172e0df18d9da0488e44cfbc98869f1, type: 3}
+  speedPotionPrefab: {fileID: 8927047081985690185, guid: 8a1fed5fca35eb74f84b2db22e597a7f, type: 3}
 --- !u!114 &582158254883334747
 MonoBehaviour:
   m_ObjectHideFlags: 0

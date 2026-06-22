@@ -628,6 +628,8 @@ public static class SetupUIEditor
         // Cấu hình các sprite bản đồ Việt Nam
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnam_flag.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house_1.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house_2.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/banh_mi.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/tra_sua.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/ca_phe.png", 512f);
@@ -694,7 +696,7 @@ public static class SetupUIEditor
         pauseTitleRect.sizeDelta = new Vector2(600, 100);
         pauseTitleRect.anchoredPosition = new Vector2(0, 160);
         Text pauseTitleText = pauseTitleObj.AddComponent<Text>();
-        pauseTitleText.text = "GAME PAUSED";
+        pauseTitleText.text = "TẠM DỪNG";
         pauseTitleText.font = pixelFont;
         pauseTitleText.fontSize = 50;
         pauseTitleText.fontStyle = FontStyle.Bold;
@@ -704,9 +706,9 @@ public static class SetupUIEditor
         pauseTitleShadow.effectColor = Color.black;
         pauseTitleShadow.effectDistance = new Vector2(3, -3);
 
-        GameObject resumeBtnObj = CreateMenuButton(pausePanelObj.transform, "ResumeButton", "CONTINUE", new Vector2(0, 40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
-        GameObject mainMenuBtnObj = CreateMenuButton(pausePanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
-        GameObject quitBtnObj = CreateMenuButton(pausePanelObj.transform, "QuitButton", "QUIT GAME", new Vector2(0, -120), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
+        GameObject resumeBtnObj = CreateMenuButton(pausePanelObj.transform, "ResumeButton", "TIẾP TỤC", new Vector2(0, 40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
+        GameObject mainMenuBtnObj = CreateMenuButton(pausePanelObj.transform, "MainMenuButton", "MENU CHÍNH", new Vector2(0, -40), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
+        GameObject quitBtnObj = CreateMenuButton(pausePanelObj.transform, "QuitButton", "THOÁT GAME", new Vector2(0, -120), new Vector2(320, 60), btnNormalColor, btnHoverColor, 20, pixelFont);
 
         // Gán PauseMenuController
         PauseMenuController pmCtrl = gameplayCanvas.gameObject.GetComponent<PauseMenuController>();
@@ -752,7 +754,7 @@ public static class SetupUIEditor
         goTitleRect.sizeDelta = new Vector2(800, 120);
         goTitleRect.anchoredPosition = new Vector2(0, 150);
         Text goTitleText = goTitleObj.AddComponent<Text>();
-        goTitleText.text = "YOU DIED";
+        goTitleText.text = "BẠN ĐÃ GỤC NGÃ";
         goTitleText.font = pixelFont;
         goTitleText.fontSize = 80;
         goTitleText.fontStyle = FontStyle.Bold;
@@ -765,8 +767,8 @@ public static class SetupUIEditor
         Color goBtnNormal = new Color(0.08f, 0.08f, 0.08f, 0.95f);
         Color goBtnHover = new Color(0.45f, 0.05f, 0.05f, 1f);
 
-        GameObject restartBtnObj = CreateMenuButton(goPanelObj.transform, "RestartButton", "TRY AGAIN", new Vector2(0, -60), new Vector2(350, 70), goBtnNormal, goBtnHover, 24, pixelFont);
-        GameObject goMainMenuBtnObj = CreateMenuButton(goPanelObj.transform, "MainMenuButton", "MAIN MENU", new Vector2(0, -150), new Vector2(350, 70), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject restartBtnObj = CreateMenuButton(goPanelObj.transform, "RestartButton", "THỬ LẠI", new Vector2(0, -60), new Vector2(350, 70), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject goMainMenuBtnObj = CreateMenuButton(goPanelObj.transform, "MainMenuButton", "MENU CHÍNH", new Vector2(0, -150), new Vector2(350, 70), goBtnNormal, goBtnHover, 24, pixelFont);
 
         // Gán GameOverController
         GameOverController goCtrl = gameplayCanvas.gameObject.GetComponent<GameOverController>();
@@ -946,7 +948,7 @@ public static class SetupUIEditor
         menuTitleRect.sizeDelta = new Vector2(1200, 120);
         menuTitleRect.anchoredPosition = new Vector2(0, 240);
         Text menuTitleText = menuTitleObj.AddComponent<Text>();
-        menuTitleText.text = "THE FALLEN KNIGHT";
+        menuTitleText.text = "TRÁNG SĨ SƠN NAM";
         menuTitleText.font = pixelFont;
         menuTitleText.fontSize = 80;
         menuTitleText.fontStyle = FontStyle.Bold;
@@ -963,20 +965,20 @@ public static class SetupUIEditor
         menuSubRect.sizeDelta = new Vector2(800, 50);
         menuSubRect.anchoredPosition = new Vector2(0, 160);
         Text menuSubText = menuSubObj.AddComponent<Text>();
-        menuSubText.text = "Dark Fantasy Chronicles";
+        menuSubText.text = "Hào Khí Đông A";
         menuSubText.font = pixelFont;
         menuSubText.fontSize = 26;
         menuSubText.fontStyle = FontStyle.Italic;
         menuSubText.alignment = TextAnchor.MiddleCenter;
-        menuSubText.color = new Color(0.6f, 0.05f, 0.05f, 1f);
+        menuSubText.color = new Color(0.8f, 0.1f, 0.1f, 1f);
         Shadow menuSubShadow = menuSubObj.AddComponent<Shadow>();
         menuSubShadow.effectColor = Color.black;
         menuSubShadow.effectDistance = new Vector2(2, -2);
 
         // Menu Buttons
-        GameObject playBtnObj = CreateMenuButton(mainMenuContainer.transform, "PlayButton", "PLAY GAME", new Vector2(0, 40), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
-        GameObject storyBtnObj = CreateMenuButton(mainMenuContainer.transform, "StoryButton", "STORY VIEWER", new Vector2(0, -50), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
-        GameObject quitGameBtnObj = CreateMenuButton(mainMenuContainer.transform, "QuitButton", "QUIT GAME", new Vector2(0, -140), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject playBtnObj = CreateMenuButton(mainMenuContainer.transform, "PlayButton", "KHỞI HÀNH", new Vector2(0, 40), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject storyBtnObj = CreateMenuButton(mainMenuContainer.transform, "StoryButton", "BIÊN NIÊN SỬ", new Vector2(0, -50), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
+        GameObject quitGameBtnObj = CreateMenuButton(mainMenuContainer.transform, "QuitButton", "THOÁT GAME", new Vector2(0, -140), new Vector2(360, 75), goBtnNormal, goBtnHover, 24, pixelFont);
 
         // --- CREDITS PANEL (Góc phải màn hình Main Menu) ---
         GameObject creditsPanelObj = new GameObject("CreditsPanel");
