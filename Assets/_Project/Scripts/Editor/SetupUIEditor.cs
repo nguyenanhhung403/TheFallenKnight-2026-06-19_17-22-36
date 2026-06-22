@@ -630,6 +630,9 @@ public static class SetupUIEditor
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house_1.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house_2.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_bamboo.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_gate.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_banyan.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/banh_mi.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/tra_sua.png", 512f);
         ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/ca_phe.png", 512f);
