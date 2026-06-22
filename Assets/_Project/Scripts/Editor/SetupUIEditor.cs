@@ -1305,18 +1305,6 @@ public static class SetupUIEditor
         return btnObj;
     }
 
-    private static Sprite LoadSpriteSafe(string path)
-    {
-        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
-        foreach (Object asset in assets)
-        {
-            if (asset is Sprite sprite)
-            {
-                return sprite;
-            }
-        }
-        return null;
-    }
 
     private static void ConfigureSpriteImporter(string path)
     {
