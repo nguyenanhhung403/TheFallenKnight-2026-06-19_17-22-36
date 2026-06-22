@@ -176,19 +176,23 @@ public class CollectibleItem : MonoBehaviour
                 AudioManager.Instance.PlaySFX(SoundEffect.CollectPotion);
 
                 Color effectColor = Color.white;
+                string vhName = "";
                 switch (itemType)
                 {
                     case CollectibleType.HealthPotion:
                         potionSystem.AddHealthPotion(amount);
                         effectColor = new Color(0.2f, 1f, 0.2f, 0.9f); // Xanh lá
+                        vhName = "Bánh Mì";
                         break;
                     case CollectibleType.ManaPotion:
                         potionSystem.AddManaPotion(amount);
                         effectColor = new Color(0f, 0.7f, 1f, 0.9f);  // Xanh dương
+                        vhName = "Trà Sữa";
                         break;
                     case CollectibleType.SpeedPotion:
                         potionSystem.AddSpeedPotion(amount);
                         effectColor = new Color(1f, 0.85f, 0f, 0.9f);  // Vàng Gold
+                        vhName = "Cà Phê";
                         break;
                 }
 
@@ -199,7 +203,7 @@ public class CollectibleItem : MonoBehaviour
                     pc.SpawnAuraEffect(effectColor, 20);
                 }
 
-                Debug.Log($"[CollectibleItem] Đã nhặt {itemType} (+{amount})");
+                Debug.Log($"[Vật Phẩm] Đã nhặt {vhName} (+{amount})");
                 
                 Destroy(gameObject);
             }

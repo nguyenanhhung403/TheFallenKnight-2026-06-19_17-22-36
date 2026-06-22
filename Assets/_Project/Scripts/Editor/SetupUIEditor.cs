@@ -56,9 +56,9 @@ public static class SetupUIEditor
         }
 
         Undo.RecordObject(potionSys, "Gán Sprites Potion");
-        potionSys.healthPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionRed_00.png");
-        potionSys.manaPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionBlue_00.png");
-        potionSys.speedPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionGold_00.png");
+        potionSys.healthPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/banh_mi.png");
+        potionSys.manaPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/tra_sua.png");
+        potionSys.speedPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/ca_phe.png");
 
         // ------------------ 2. THIẾT LẬP CANVAS & UI ------------------
         Canvas canvas = Object.FindAnyObjectByType<Canvas>();
@@ -158,15 +158,15 @@ public static class SetupUIEditor
 
         Vector3 playerPos = player.transform.position;
 
-        // Sinh 3 bình thuốc ở vị trí x = +3f, +5f, +7f so với player
+        // Sinh 3 vật phẩm Việt Nam ở vị trí x = +3f, +5f, +7f so với player
         CreateCollectible(playerPos + Vector3.right * 3f + Vector3.up * 0.5f, CollectibleType.HealthPotion, 
-            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionRed_00.png", "Collectible_HealthPotion");
+            "Assets/_Project/Sprites/VietNam/banh_mi.png", "Collectible_BanhMi");
 
         CreateCollectible(playerPos + Vector3.right * 5f + Vector3.up * 0.5f, CollectibleType.ManaPotion, 
-            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionBlue_00.png", "Collectible_ManaPotion");
+            "Assets/_Project/Sprites/VietNam/tra_sua.png", "Collectible_TraSua");
 
         CreateCollectible(playerPos + Vector3.right * 7f + Vector3.up * 0.5f, CollectibleType.SpeedPotion, 
-            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionGold_00.png", "Collectible_SpeedPotion");
+            "Assets/_Project/Sprites/VietNam/ca_phe.png", "Collectible_CaPhe");
 
         // Đánh dấu Scene thay đổi để lưu
         if (player.scene.IsValid())
@@ -177,11 +177,11 @@ public static class SetupUIEditor
         Undo.CollapseUndoOperations(undoGroup);
 
         EditorUtility.DisplayDialog("Thành công", 
-            "Đã tạo thành công 3 bình thuốc thử nghiệm trên mặt đất (phía bên phải nhân vật):\n\n" +
-            "1. Bình Hồi Máu (Red Potion)\n" +
-            "2. Bình Hồi Mana (Blue Potion)\n" +
-            "3. Bình Tốc Độ (Gold Potion)\n\n" +
-            "Hãy nhấn Play và điều khiển nhân vật chạy qua để nhặt thử!", "Tuyệt vời");
+            "Đã tạo thành công 3 vật phẩm thử nghiệm Việt Nam trên mặt đất (phía bên phải nhân vật):\n\n" +
+            "1. Bánh Mì kẹp thịt (Hồi Máu)\n" +
+            "2. Trà Sữa trân châu (Hồi Năng Lượng)\n" +
+            "3. Cà Phê Sữa Đá Phin (Tăng Tốc Độ)\n\n" +
+            "Hãy nhấn Play và điều khiển nhân vật chạy qua để thưởng thức!", "Tuyệt vời");
     }
 
     private static void CreateCollectible(Vector3 position, CollectibleType type, string spritePath, string name)
@@ -325,13 +325,13 @@ public static class SetupUIEditor
         Undo.IncrementCurrentGroup();
         int undoGroup = Undo.GetCurrentGroup();
 
-        // 2. Tạo/Lấy Prefab các bình thuốc
+        // 2. Tạo/Lấy Prefab các vật phẩm Việt Nam
         GameObject healthPotion = GetOrCreatePotionPrefab(CollectibleType.HealthPotion, 
-            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionRed_00.png", "Collectible_HealthPotion");
+            "Assets/_Project/Sprites/VietNam/banh_mi.png", "Collectible_BanhMi");
         GameObject manaPotion = GetOrCreatePotionPrefab(CollectibleType.ManaPotion, 
-            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionBlue_00.png", "Collectible_ManaPotion");
+            "Assets/_Project/Sprites/VietNam/tra_sua.png", "Collectible_TraSua");
         GameObject speedPotion = GetOrCreatePotionPrefab(CollectibleType.SpeedPotion, 
-            "Assets/_Project/Sprites/UI/2D Pixel Item Pack/No Outline/S_ItemNoOutline_PotionGold_00.png", "Collectible_SpeedPotion");
+            "Assets/_Project/Sprites/VietNam/ca_phe.png", "Collectible_CaPhe");
 
         if (healthPotion == null || manaPotion == null || speedPotion == null)
         {
@@ -542,24 +542,17 @@ public static class SetupUIEditor
     private static GameObject GetOrCreatePotionPrefab(CollectibleType type, string spritePath, string prefabName)
     {
         string localPath = $"Assets/_Project/Prefabs/Potions/{prefabName}.prefab";
-        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(localPath);
-        if (prefab != null) return prefab;
+        if (AssetDatabase.LoadAssetAtPath<GameObject>(localPath) != null)
+        {
+            AssetDatabase.DeleteAsset(localPath);
+        }
 
         GameObject temp = new GameObject(prefabName);
         SpriteRenderer sr = temp.AddComponent<SpriteRenderer>();
+        
+        ConfigurePixelSpriteImporter(spritePath, 512f);
+        
         Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
-        if (s != null)
-        {
-            string path = AssetDatabase.GetAssetPath(s.texture);
-            TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
-            if (importer != null && (importer.spritePixelsPerUnit != 16f || importer.filterMode != FilterMode.Point))
-            {
-                importer.spritePixelsPerUnit = 16f;
-                importer.filterMode = FilterMode.Point;
-                importer.textureCompression = TextureImporterCompression.Uncompressed;
-                importer.SaveAndReimport();
-            }
-        }
         sr.sprite = s;
         sr.sortingOrder = 5;
         CircleCollider2D circleCol = temp.AddComponent<CircleCollider2D>();
@@ -572,7 +565,7 @@ public static class SetupUIEditor
 
         GameObject saved = PrefabUtility.SaveAsPrefabAsset(temp, localPath);
         Object.DestroyImmediate(temp);
-        Debug.Log($"[Setup] Đã tạo Prefab Bình Thuốc: {localPath}");
+        Debug.Log($"[Setup] Đã tạo Prefab Vật Phẩm Việt Nam: {localPath}");
         return saved;
     }
 
@@ -620,6 +613,13 @@ public static class SetupUIEditor
         ConfigureSpriteImporter(menuBgPath);
         ConfigureSpriteImporter(gameoverBgPath);
         ConfigureSpriteImporter(bossDefeatedBgPath);
+
+        // Cấu hình các sprite bản đồ Việt Nam
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnam_flag.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/vietnamese_house.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/banh_mi.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/tra_sua.png", 512f);
+        ConfigurePixelSpriteImporter("Assets/_Project/Sprites/VietNam/ca_phe.png", 512f);
 
         Sprite menuBg = AssetDatabase.LoadAssetAtPath<Sprite>(menuBgPath);
         Sprite gameoverBg = AssetDatabase.LoadAssetAtPath<Sprite>(gameoverBgPath);
@@ -841,8 +841,8 @@ public static class SetupUIEditor
         Color btnLegacyHover = new Color(0.58f, 0.08f, 0.08f, 1f);
 
         // Nút bên trái (X = -320) và Nút bên phải (X = 320)
-        GameObject redemptionBtnObj = CreateMenuButton(bdPanelObj.transform, "RedemptionButton", "REDEMPTION (CỨU RỖI)", new Vector2(-320, -180), new Vector2(440, 80), btnRedemptionColor, btnRedemptionHover, 22, pixelFont);
-        GameObject legacyBtnObj = CreateMenuButton(bdPanelObj.transform, "LegacyButton", "LEGACY (KẾ THỪA BÓNG TỐI)", new Vector2(320, -180), new Vector2(440, 80), btnLegacyColor, btnLegacyHover, 22, pixelFont);
+        GameObject redemptionBtnObj = CreateMenuButton(bdPanelObj.transform, "RedemptionButton", "CỨU RỖI (HÀO KHÍ ĐÔNG A)", new Vector2(-320, -180), new Vector2(440, 80), btnRedemptionColor, btnRedemptionHover, 18, pixelFont);
+        GameObject legacyBtnObj = CreateMenuButton(bdPanelObj.transform, "LegacyButton", "KẾ THỪA (VÒNG LẶP TỐI TĂM)", new Vector2(320, -180), new Vector2(440, 80), btnLegacyColor, btnLegacyHover, 18, pixelFont);
 
         // Gán sự kiện cho các nút lựa chọn Ending
         UnityEventTools.AddVoidPersistentListener(redemptionBtnObj.GetComponent<Button>().onClick, pmCtrl.ChooseRedemptionEnding);
@@ -1050,10 +1050,10 @@ public static class SetupUIEditor
         storySubTitleShadow.effectDistance = new Vector2(2, -2);
 
         // Submenu Buttons
-        GameObject introBtn = CreateMenuButton(storySubPanelObj.transform, "IntroBtn", "1. LORE INTRO", new Vector2(0, 80), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
-        GameObject redemptionBtn = CreateMenuButton(storySubPanelObj.transform, "RedemptionBtn", "2. REDEMPTION ENDING", new Vector2(0, 0), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
-        GameObject legacyBtn = CreateMenuButton(storySubPanelObj.transform, "LegacyBtn", "3. LEGACY ENDING", new Vector2(0, -80), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
-        GameObject backSubBtn = CreateMenuButton(storySubPanelObj.transform, "BackSubBtn", "BACK TO MENU", new Vector2(0, -160), new Vector2(380, 60), new Color(0.1f, 0.1f, 0.1f, 1f), new Color(0.2f, 0.2f, 0.2f, 1f), 18, pixelFont);
+        GameObject introBtn = CreateMenuButton(storySubPanelObj.transform, "IntroBtn", "1. KHỞI NGUỒN ĐẠI VIỆT", new Vector2(0, 80), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
+        GameObject redemptionBtn = CreateMenuButton(storySubPanelObj.transform, "RedemptionBtn", "2. KẾT CỤC CỨU RỖI", new Vector2(0, 0), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
+        GameObject legacyBtn = CreateMenuButton(storySubPanelObj.transform, "LegacyBtn", "3. KẾT CỤC KẾ THỪA", new Vector2(0, -80), new Vector2(380, 60), btnNormalColor, btnHoverColor, 18, pixelFont);
+        GameObject backSubBtn = CreateMenuButton(storySubPanelObj.transform, "BackSubBtn", "QUAY LẠI MENU", new Vector2(0, -160), new Vector2(380, 60), new Color(0.1f, 0.1f, 0.1f, 1f), new Color(0.2f, 0.2f, 0.2f, 1f), 18, pixelFont);
 
         // --- STORY PLAY PANEL (FULL SCREEN) ---
         GameObject storyPanelObj = new GameObject("StoryPanel");
@@ -1109,12 +1109,12 @@ public static class SetupUIEditor
         
         Text storyCredText = credContainerObj.AddComponent<Text>();
         storyCredText.text = "THE FALLEN KNIGHT\n\n\n" +
-                             "DEVELOPED BY TEAM FPTU:\n\n" +
+                             "PHÁT TRIỂN BỞI NHÓM FPTU:\n\n" +
                              "• SE171440 - Hứa Hoàng Minh\n\n" +
                              "• SE150834 - Nguyễn Quốc Khánh\n\n" +
                              "• Se172559 - Huỳnh Hoàng Tiến\n\n" +
                              "• SE160204 - Trương Anh Kiệt\n\n\n" +
-                             "THANKS FOR PLAYING!";
+                             "CẢM ƠN BẠN ĐÃ TRẢI NGHIỆM!";
         storyCredText.font = pixelFont;
         storyCredText.fontSize = 28;
         storyCredText.fontStyle = FontStyle.Bold;
@@ -1125,7 +1125,7 @@ public static class SetupUIEditor
         storyCredShadow.effectDistance = new Vector2(3, -3);
 
         // Skip Button (Góc dưới bên phải)
-        GameObject skipBtnObj = CreateMenuButton(storyPanelObj.transform, "SkipBtn", "SKIP (ESC)", new Vector2(750, -450), new Vector2(240, 60), new Color(0.2f, 0.05f, 0.05f, 0.8f), new Color(0.4f, 0.05f, 0.05f, 1f), 18, pixelFont);
+        GameObject skipBtnObj = CreateMenuButton(storyPanelObj.transform, "SkipBtn", "BỎ QUA (ESC)", new Vector2(750, -450), new Vector2(240, 60), new Color(0.2f, 0.05f, 0.05f, 0.8f), new Color(0.4f, 0.05f, 0.05f, 1f), 18, pixelFont);
 
         // Cài đặt Controller
         UnityEngine.Video.VideoClip introClip = AssetDatabase.LoadAssetAtPath<UnityEngine.Video.VideoClip>("Assets/video/intro_boss_transformation.mp4");
@@ -1146,25 +1146,24 @@ public static class SetupUIEditor
 
         // Nội dung Slide
         storyCtrl.introSlides = new string[] {
-            "Hàng nghìn năm trước, Hiệp sĩ Thánh Aurelius là người anh hùng đã đánh bại Quỷ Vương và cứu lấy lục địa Elyndor.",
-            "Sau chiến thắng, các vị thần từ chối đưa ông lên Thiên Giới vì linh hồn ông được sinh ra từ chiến tranh và máu đổ.",
-            "Không thể chết, cũng không thể được cứu rỗi, Aurelius lang thang suốt nhiều thế kỷ.",
-            "Qua thời gian, khát vọng bảo vệ nhân loại dần biến thành cơn ám ảnh phải chiến đấu không ngừng. Ông tin rằng chỉ có chiến tranh mới giữ cho thế giới tồn tại.",
-            "Người anh hùng năm xưa dần trở thành mối hiểm họa lớn nhất của nhân loại.",
-            "Người chơi vào vai The Nameless – một chiến binh trẻ mang trong mình Soul of Dawn...",
-            "...linh hồn được các vị thần tạo ra nhằm chấm dứt vòng lặp chiến tranh và giải thoát cho Hiệp sĩ Thánh."
+            "Hàng nghìn năm trước, Tráng Sĩ Sơn Nam là vị anh hùng oai hùng đã đánh tan giặc ngoại xâm phương Bắc và bảo vệ bờ cõi Đại Việt.",
+            "Sau thắng lợi vẻ vang, do mang nợ máu chiến trận, vong hồn ông không thể siêu thoát, lưu lạc nhân gian suốt nhiều triều đại.",
+            "Theo thời gian, tâm trí ông dần bị tà khí xâm chiếm, ảo tưởng rằng chiến tranh vẫn chưa kết thúc.",
+            "Người anh hùng năm xưa giờ trở thành mối hiểm họa đe dọa bờ cõi bình yên của nước nhà.",
+            "Người chơi vào vai cậu học trò nghèo mang trong mình dòng máu anh hùng 'Hào Khí Đông A'...",
+            "...với lòng yêu nước nồng nàn và ý chí bất khuất, quyết tâm thức tỉnh Tráng Sĩ Sơn Nam khỏi cơn u mê ngàn năm!"
         };
         
         storyCtrl.redemptionSlides = new string[] {
-            "Trận chiến sinh tử kết thúc...",
-            "The Nameless đã giải thoát thành công linh hồn Hiệp sĩ Thánh Aurelius.",
-            "Bóng tối đang dần bị thanh tẩy bởi hào quang cứu thế của Soul of Dawn..."
+            "Lời ru đất mẹ dịu êm vang vọng...",
+            "Hào Khí Đông A đã thanh tẩy tà khí, giúp tráng sĩ Sơn Nam trút bỏ gươm đao, mỉm cười siêu thoát.",
+            "Đất nước thanh bình vang tiếng ca thái bình thịnh trị!"
         };
         
         storyCtrl.legacySlides = new string[] {
-            "Hiệp sĩ Thánh đã ngã xuống...",
-            "Nhưng tàn dư bóng tối vẫn quẩn quanh và tìm kiếm chủ nhân mới.",
-            "Vòng lặp vô tận của chiến tranh và thù hận lại tiếp diễn..."
+            "Tráng sĩ ngã xuống, nhưng tà niệm chiến tranh vẫn chưa chịu tan biến.",
+            "Cầm lấy thanh thần kiếm vương đầy hắc khí, cậu thiếu niên bị bóng tối nuốt chửng, trở thành hộ vệ mới của cõi u minh.",
+            "Vòng lặp giặc giã và thù hận lại bắt đầu..."
         };
 
         // Gán sự kiện click bằng UnityEventTools
@@ -1286,6 +1285,20 @@ public static class SetupUIEditor
             importer.textureType = TextureImporterType.Sprite;
             importer.spriteImportMode = SpriteImportMode.Single;
             importer.filterMode = FilterMode.Bilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+        }
+    }
+
+    private static void ConfigurePixelSpriteImporter(string path, float ppu)
+    {
+        TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer != null)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = ppu;
+            importer.filterMode = FilterMode.Point;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
         }

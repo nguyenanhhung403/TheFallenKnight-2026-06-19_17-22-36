@@ -404,6 +404,33 @@ public class PotionSystem : MonoBehaviour
         countShadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
         countShadow.effectDistance = new Vector2(1f, -1f);
 
+        // Tạo Text nhãn tên Việt hóa (Bánh Mì / Trà Sữa / Cà Phê) bên dưới slot
+        GameObject nameLabelObj = new GameObject("NameLabel");
+        nameLabelObj.transform.SetParent(slotObj.transform, false);
+
+        Text nameText = nameLabelObj.AddComponent<Text>();
+        nameText.font = customFont;
+        nameText.fontSize = 10;
+        nameText.fontStyle = FontStyle.Bold;
+        nameText.color = new Color(0.9f, 0.85f, 0.6f, 0.95f); // Vàng nhạt dễ đọc
+        if (slotName == "Health") nameText.text = "Bánh Mì";
+        else if (slotName == "Mana") nameText.text = "Trà Sữa";
+        else if (slotName == "Speed") nameText.text = "Cà Phê";
+        nameText.alignment = TextAnchor.MiddleCenter;
+        nameText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        nameText.verticalOverflow = VerticalWrapMode.Overflow;
+
+        RectTransform nameLabelRect = nameLabelObj.GetComponent<RectTransform>();
+        nameLabelRect.anchorMin = new Vector2(0.5f, 0f);
+        nameLabelRect.anchorMax = new Vector2(0.5f, 0f);
+        nameLabelRect.pivot = new Vector2(0.5f, 1f);
+        nameLabelRect.anchoredPosition = new Vector2(0f, -4f);
+        nameLabelRect.sizeDelta = new Vector2(70f, 15f);
+
+        Shadow nameLabelShadow = nameLabelObj.AddComponent<Shadow>();
+        nameLabelShadow.effectColor = new Color(0f, 0f, 0f, 0.9f);
+        nameLabelShadow.effectDistance = new Vector2(1f, -1f);
+
         countTextOut = countText;
     }
 

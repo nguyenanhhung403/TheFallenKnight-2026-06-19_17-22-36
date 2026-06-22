@@ -1,53 +1,58 @@
-# ⚔️ THE FALLEN KNIGHT ⚔️
+# ⚔️ THE FALLEN KNIGHT - HÀO KHÍ ĐÔNG A ⚔️
 
-**The Fallen Knight** là một tựa game nhập vai hành động (Action RPG) 2D màn hình ngang mang phong cách giả tưởng đen tối (Dark Fantasy) được phát triển trên nền tảng **Unity**. Trò chơi kết hợp phong cách mỹ thuật Retro Pixel truyền thống cùng với cơ chế chiến đấu chặt chém hấp dẫn, hệ thống âm thanh sống động và cốt truyện sâu sắc phân nhánh nhiều kết cục.
+**The Fallen Knight - Hào Khí Đông A** là một tựa game nhập vai hành động (Action RPG) 2D màn hình ngang mang đậm kịch bản lịch sử giả tưởng Việt Nam được phát triển trên nền tảng **Unity**. Trò chơi kết hợp phong cách mỹ thuật Retro Pixel truyền thống cùng với kịch bản thuần Việt hào hùng, cơ chế chiến đấu chặt chém hấp dẫn, hệ thống âm thanh sống động và cốt truyện phân nhánh nhiều kết cục.
 
 ---
 
 ## 📜 Cốt Truyện & Bối Cảnh (Lore)
-> *Hàng nghìn năm trước, Hiệp sĩ Thánh **Aurelius** là người anh hùng đã đánh bại Quỷ Vương và cứu lấy lục địa Elyndor.*
+> *Hàng nghìn năm trước, **Tráng Sĩ Sơn Nam** là vị anh hùng oai hùng đã có công đánh tan giặc ngoại xâm phương Bắc và bảo vệ bờ cõi Đại Việt.*
 >
-> *Sau chiến thắng vinh quang, các vị thần đã từ chối đưa ông lên Thiên Giới vì linh hồn ông được sinh ra từ chiến tranh và máu đổ. Không thể chết, cũng không thể được cứu rỗi, Aurelius lang thang vô định suốt nhiều thế kỷ.*
+> *Sau thắng lợi vẻ vang, do mang nợ máu chiến trận nặng nề, vong hồn ông không thể siêu thoát mà lưu lạc nhân gian suốt nhiều triều đại.*
 >
-> *Qua thời gian, khát vọng bảo vệ nhân loại ban đầu dần biến thành cơn ám ảnh phải chiến đấu không ngừng. Ông tin rằng chỉ có chiến tranh mới giữ cho thế giới này tồn tại. Người anh hùng năm xưa dần trở thành mối hiểm họa lớn nhất của nhân loại.*
+> *Theo thời gian, tâm trí ông dần bị tà khí xâm chiếm, rơi vào ảo tưởng u tối rằng chiến tranh vẫn chưa kết thúc và liên tục mang đao kiếm tàn phá làng mạc. Người anh hùng năm xưa giờ trở thành hiểm họa lớn đe dọa bờ cõi bình yên của nước nhà.*
 >
-> *Người chơi vào vai **The Nameless** – một chiến binh trẻ mang trong mình **Soul of Dawn** (Linh hồn Bình Minh) được các vị thần tạo ra nhằm chấm dứt vòng lặp chiến tranh vô tận này và giải thoát cho Hiệp sĩ Thánh Aurelius.*
+> *Người chơi vào vai một người con nước Việt mang trong mình dòng máu anh hùng **"Hào Khí Đông A"**, với lòng yêu nước nồng nàn và ý chí bất khuất, quyết tâm lên đường thức tỉnh Tráng Sĩ Sơn Nam khỏi cơn u mê ngàn năm để giải thoát cho linh hồn của ông.*
 
 ---
 
 ## 🎮 Hướng Dẫn Điều Khiển (Controls)
 
-| Phím bấm | Hành động trong game |
-| :--- | :--- |
-| **A / D** (hoặc Phím Mũi Tên) | Di chuyển sang Trái / Phải |
-| **W** (hoặc Phím Lên / Space) | Nhảy lên (Jump) |
-| **J** (hoặc Chuột Trái) | Tấn công thường (Melee Attack) |
-| **K** (hoặc Chuột Phải) | Sử dụng kỹ năng đặc biệt (Special Skill) |
-| **1 / 2 / 3** | Uống Bình Máu / Thể Lực / Năng Lượng |
-| **ESC / P (khi chơi)** | Tạm dừng game (Pause Menu) |
-| **P** | **Mở bảng Hack/Cheat Tool** (Bật/tắt chế độ bất tử, tăng sát thương, hồi máu nhanh để thử nghiệm game) |
+| Phím bấm | Hành động trong game | Chi tiết kịch bản Việt hóa |
+| :--- | :--- | :--- |
+| **A / D** (hoặc Phím Mũi Tên) | Di chuyển sang Trái / Phải | Điều khiển nhân vật chạy |
+| **W** (hoặc Phím Lên / Space) | Nhảy lên (Jump) | Tránh né chướng ngại vật |
+| **J** (hoặc Chuột Trái) | Tấn công thường (Melee Attack) | Vung kiếm chiến đấu |
+| **K** (hoặc Chuột Phải) | Sử dụng kỹ năng đặc biệt (Special Skill) | Kỹ năng giải phóng hào khí |
+| **1** | Uống/Ăn **Bánh Mì** | Phục hồi **Máu** (HP) |
+| **2** | Uống **Trà Sữa** | Phục hồi **Năng Lượng** (MP) |
+| **3** | Uống **Cà Phê Sữa Đá** | Tăng **Tốc Độ** di chuyển & tấn công (Speed Buff) |
+| **ESC / P (khi chơi)** | Tạm dừng game (Pause Menu) | Tạm dừng hoặc thoát game |
+| **P** | **Bảng Hack/Cheat Tool** | Bật/tắt chế độ bất tử, tăng sát thương, hồi máu nhanh |
 
 ---
 
-## ✨ Các Tính Năng Nổi Bật
+## ✨ Các Tính Năng Việt Hóa Đặc Biệt
 
-### 1. Hệ thống Phân Nhánh Kết Cục (Multiple Endings)
-Sau khi đánh bại Trùm Cuối (Boss Thánh Hiệp Sĩ), người chơi sẽ đối mặt với sự lựa chọn định đoạt vận mệnh thế giới:
-*   🟢 **Redemption Ending (Cứu Rỗi - Phím tắt/Nút bấm lựa chọn trái)**:
-    *   *Kịch bản*: Cảnh Bóng ma đen quỳ xuống, lưỡi hái vỡ vụn, ánh sáng thánh thanh tẩy bóng tối thành các hạt vàng bay lên trời.
+### 1. Hệ thống Vật Phẩm / Thức Ăn Thuần Việt (Rebranded Potions)
+Hệ thống bình thuốc hồi phục đã được đổi tên và thay đổi sprite thành món ăn/đồ uống đặc trưng của Việt Nam:
+*   🥖 **Bánh Mì kẹp thịt (Health Potion)**: Phục hồi 50 HP (Máu) khi sử dụng. Kích hoạt hiệu ứng phát sáng xanh lá.
+*   🥤 **Trà Sữa trân châu (Mana Potion)**: Phục hồi 50 MP (Năng lượng) khi sử dụng. Kích hoạt hiệu ứng phát sáng xanh dương.
+*   ☕ **Cà Phê Phin Sữa Đá (Speed Potion)**: Tăng tốc độ di chuyển và tốc độ hoạt ảnh tấn công lên **1.5 lần trong 5 giây**. Kích hoạt hiệu ứng phát sáng vàng rực.
+
+### 2. Các Sprite Trang Trí Bản Đồ Việt Nam (Map Decorations)
+Dự án được bổ sung thư mục chứa các sprite pixel art chất lượng cao mang đậm dấu ấn Việt Nam để vẽ và trang trí lên bản đồ (đặt tại `Assets/_Project/Sprites/VietNam/`):
+*   🇻🇳 **Lá cờ Việt Nam (vietnam_flag)**: Cờ đỏ sao vàng tung bay dạng pixel art.
+*   🏡 **Ngôi nhà truyền thống xưa (vietnamese_house)**: Nhà ngói đỏ cổ kính đặc trưng của làng quê Việt Nam xưa.
+*   🍔 Món ăn: Bánh Mì (`banh_mi.png`), Trà Sữa (`tra_sua.png`), Cà Phê Phin (`ca_phe.png`) dạng Pixel Art 16-bit sắc nét.
+
+### 3. Hệ thống Phân Nhánh Kết Cục (Multiple Endings)
+Sau khi đánh bại Boss cuối **Tráng Sĩ Sơn Nam**, người chơi sẽ đưa ra sự lựa chọn định đoạt số phận của ông:
+*   🟢 **Lựa chọn Cứu Rỗi (Hào Khí Đông A - Trái)**:
+    *   *Kịch bản*: Dùng lòng từ bi và Hào Khí Đông A thanh tẩy tà khí giúp linh hồn Tráng sĩ Sơn Nam siêu thoát, đất nước thanh bình.
     *   *Video clip*: `ending_redemption.mp4`.
-*   🔴 **Legacy Ending (Kế Thừa Bóng Tối - Phím tắt/Nút bấm lựa chọn phải)**:
-    *   *Kịch bản*: Cảnh nhân vật chính nhặt lưỡi hái lên, hắc khí quấn quanh người và mắt hóa đỏ, vòng lặp chiến tranh lặp lại.
+*   🔴 **Lựa chọn Kế Thừa (Vòng Lặp Tối Tăm - Phải)**:
+    *   *Kịch bản*: Nhân vật chính nhặt thanh kiếm vương đầy hắc khí lên, bị tà niệm nuốt chửng và trở thành hộ vệ mới của cõi u minh. Vòng lặp chiến tranh tiếp diễn.
     *   *Video clip*: `ending_legacy.mp4`.
-
-### 2. Giao Diện Dark Fantasy & Font Chữ Pixel
-*   Tích hợp font chữ game pixel cổ điển (`PressStart2P`) thống nhất cho toàn bộ giao diện từ **Menu chính, Màn hình Pause, Màn hình Game Over** cho tới **Bảng lựa chọn Ending**.
-*   Thiết kế HUD hiển thị lượng Máu (HP), Năng lượng (MP) và **Số lượng bình thuốc (Potion Count)** trực quan, sinh động.
-
-### 3. Trình Quản Lý Âm Thanh (Audio Manager)
-Hệ thống âm thanh phân tách kênh BGM (Nhạc nền) và SFX (Hiệu ứng) chân thực:
-*   Phát nhạc nền u ám dồn dập khi chiến đấu với Boss.
-*   SFX sinh động khi nhân vật Tấn công (Hit), Bị thương (Hurt), Nhảy (Jump), Ăn tiền vàng (Coin), Thắng trận (Victory) và Thua cuộc (Game Over).
 
 ---
 
@@ -55,18 +60,20 @@ Hệ thống âm thanh phân tách kênh BGM (Nhạc nền) và SFX (Hiệu ứn
 ```text
 Assets/
 ├── _Project/
-│   ├── Audio/               # Tài nguyên âm thanh hiệu ứng (SFX & BGM)
-│   ├── Fonts/               # Font chữ Pixel PressStart2P-Regular
+│   ├── Audio/               # Kênh âm thanh hiệu ứng (SFX & BGM)
+│   ├── Fonts/               # Font chữ Pixel cho giao diện Việt hóa
 │   ├── Scenes/              # Chứa MainMenuScene & SampleScene
 │   ├── Scripts/             
-│   │   ├── Editor/          # Chứa SetupUIEditor (Công cụ Setup tự động)
-│   │   ├── Player/          # Điều khiển nhân vật, chỉ số và bình thuốc
+│   │   ├── Editor/          # Chứa SetupUIEditor (Tự động đồng bộ hóa & thiết lập sprite Việt Nam)
+│   │   ├── Player/          # Điều khiển nhân vật, chỉ số HP/MP và hệ thống Bánh Mì/Trà Sữa/Cà Phê
 │   │   ├── Enemy/           # Trí tuệ nhân tạo quái vật & chỉ số Boss
 │   │   ├── Audio/           # Quản lý âm thanh AudioManager
-│   │   └── UI/              # Quản lý Menu, Pause, Game Over, Cutscene
-│   └── Sprites/             # Sprite ảnh nền giao diện Dark Fantasy
-└── video/                   # Chứa các đoạn phim cắt cảnh mp4 (Intro, Endings)
+│   │   └── UI/              # Quản lý Menu chính, Pause, Game Over, Cutscene Việt hóa
+│   └── Sprites/             
+│       ├── UI/              # Ảnh nền giao diện
+│       └── VietNam/         # Các sprite thuần Việt (Lá cờ, Ngôi nhà, Bánh Mì, Trà Sữa, Cà Phê)
+└── video/                   # Các đoạn phim cắt cảnh mp4 (Intro, Endings)
 ```
 
 ---
-*Chúc bạn có những trải nghiệm tuyệt vời cùng **The Fallen Knight**!*
+*Chúc bạn có những trải nghiệm tuyệt vời cùng **The Fallen Knight - Hào Khí Đông A**!*
