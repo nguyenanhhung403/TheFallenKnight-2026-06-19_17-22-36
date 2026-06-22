@@ -56,9 +56,9 @@ public static class SetupUIEditor
         }
 
         Undo.RecordObject(potionSys, "Gán Sprites Potion");
-        potionSys.healthPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/banh_mi.png");
-        potionSys.manaPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/tra_sua.png");
-        potionSys.speedPotionSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/ca_phe.png");
+        potionSys.healthPotionSprite = LoadSpriteSafe("Assets/_Project/Sprites/VietNam/banh_mi.png");
+        potionSys.manaPotionSprite = LoadSpriteSafe("Assets/_Project/Sprites/VietNam/tra_sua.png");
+        potionSys.speedPotionSprite = LoadSpriteSafe("Assets/_Project/Sprites/VietNam/ca_phe.png");
 
         // ------------------ 2. THIẾT LẬP CANVAS & UI ------------------
         Canvas canvas = Object.FindAnyObjectByType<Canvas>();
@@ -552,7 +552,18 @@ public static class SetupUIEditor
         
         ConfigurePixelSpriteImporter(spritePath, 512f);
         
-        Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        // Tìm Sprite từ file ảnh (hỗ trợ cả Single lẫn Multiple Slice của người dùng)
+        Sprite s = null;
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(spritePath);
+        foreach (Object asset in assets)
+        {
+            if (asset is Sprite sprite)
+            {
+                s = sprite;
+                break;
+            }
+        }
+
         sr.sprite = s;
         sr.sortingOrder = 5;
         CircleCollider2D circleCol = temp.AddComponent<CircleCollider2D>();
@@ -606,9 +617,9 @@ public static class SetupUIEditor
     public static void SetupMenus()
     {
         // ------------------ 1. CONFIG SPRITES ------------------
-        string menuBgPath = "Assets/_Project/Sprites/UI/dark_fantasy_menu_bg.png";
-        string gameoverBgPath = "Assets/_Project/Sprites/UI/dark_fantasy_gameover_bg.png";
-        string bossDefeatedBgPath = "Assets/_Project/Sprites/UI/boss_defeated_choice_bg.png";
+        string menuBgPath = "Assets/_Project/Sprites/VietNam/vietnam_dark_menu_bg.png";
+        string gameoverBgPath = "Assets/_Project/Sprites/VietNam/vietnam_dark_gameover_bg.png";
+        string bossDefeatedBgPath = "Assets/_Project/Sprites/VietNam/vietnam_dark_choice_bg.png";
 
         ConfigureSpriteImporter(menuBgPath);
         ConfigureSpriteImporter(gameoverBgPath);
@@ -849,6 +860,23 @@ public static class SetupUIEditor
         UnityEventTools.AddVoidPersistentListener(legacyBtnObj.GetComponent<Button>().onClick, pmCtrl.ChooseLegacyEnding);
 
         bdPanelObj.SetActive(false);
+
+        // Tự động gán Sprite Bánh Mì, Trà Sữa, Cà Phê cho PotionSystem trên Player để đảm bảo HUD hiển thị đúng
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj == null) playerObj = GameObject.Find("Player");
+        if (playerObj != null)
+        {
+            PotionSystem potionSys = playerObj.GetComponent<PotionSystem>();
+            if (potionSys != null)
+            {
+                Undo.RecordObject(potionSys, "Gán Sprites Potion Việt Nam");
+                potionSys.healthPotionSprite = LoadSpriteSafe("Assets/_Project/Sprites/VietNam/banh_mi.png");
+                potionSys.manaPotionSprite = LoadSpriteSafe("Assets/_Project/Sprites/VietNam/tra_sua.png");
+                potionSys.speedPotionSprite = LoadSpriteSafe("Assets/_Project/Sprites/VietNam/ca_phe.png");
+                EditorUtility.SetDirty(potionSys);
+                Debug.Log("[Setup] Đã gán tự động Sprite Bánh Mì, Trà Sữa, Cà Phê vào PotionSystem trên Player!");
+            }
+        }
 
         EditorSceneManager.MarkSceneDirty(gameplayCanvas.gameObject.scene);
         EditorSceneManager.SaveScene(gameplayCanvas.gameObject.scene);
@@ -1277,6 +1305,19 @@ public static class SetupUIEditor
         return btnObj;
     }
 
+    private static Sprite LoadSpriteSafe(string path)
+    {
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        foreach (Object asset in assets)
+        {
+            if (asset is Sprite sprite)
+            {
+                return sprite;
+            }
+        }
+        return null;
+    }
+
     private static void ConfigureSpriteImporter(string path)
     {
         TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -1295,12 +1336,38 @@ public static class SetupUIEditor
         TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
         if (importer != null)
         {
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = SpriteImportMode.Single;
-            importer.spritePixelsPerUnit = ppu;
-            importer.filterMode = FilterMode.Point;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            importer.SaveAndReimport();
+            bool needsSave = false;
+            if (importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                needsSave = true;
+            }
+            // Nếu spriteImportMode chưa được cấu hình, mới đặt thành Single
+            if (importer.spriteImportMode == SpriteImportMode.None)
+            {
+                importer.spriteImportMode = SpriteImportMode.Single;
+                needsSave = true;
+            }
+            // Chỉ ghi đè PPU nếu người dùng chưa đổi sang 16 (hoặc giá trị khác 100 mặc định)
+            if (importer.spritePixelsPerUnit == 100f && ppu != 100f)
+            {
+                importer.spritePixelsPerUnit = ppu;
+                needsSave = true;
+            }
+            if (importer.filterMode != FilterMode.Point)
+            {
+                importer.filterMode = FilterMode.Point;
+                needsSave = true;
+            }
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                needsSave = true;
+            }
+            if (needsSave)
+            {
+                importer.SaveAndReimport();
+            }
         }
     }
 

@@ -247,9 +247,9 @@ MonoBehaviour:
   currentHealth: 0
   baseDamage: 14
   dropProbability: 0.15
-  healthPotionPrefab: {fileID: 6236248885502967272, guid: 65e0e549f3bbef644a3cefef5b8da290, type: 3}
-  manaPotionPrefab: {fileID: 1747327737350512287, guid: c125c1c6a2f4c4d47b3f4cac19b9f802, type: 3}
-  speedPotionPrefab: {fileID: 7161211418392324159, guid: 84d04d5d108d3d14bbb8cefd892730cc, type: 3}
+  healthPotionPrefab: {fileID: 2621260423761246932, guid: 6de43fd3ef7bb7b43b866205a88621ea, type: 3}
+  manaPotionPrefab: {fileID: 3764998069628601675, guid: d172e0df18d9da0488e44cfbc98869f1, type: 3}
+  speedPotionPrefab: {fileID: 2708698077120623942, guid: 8a1fed5fca35eb74f84b2db22e597a7f, type: 3}
 --- !u!114 &582158254883334747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -268,3 +268,5 @@ MonoBehaviour:
   patrolDistance: 20
   attackCooldown: 1.8000001
   attackDamage: 14
+  isRanged: 0
+  projectilePrefab: {fileID: 0}
