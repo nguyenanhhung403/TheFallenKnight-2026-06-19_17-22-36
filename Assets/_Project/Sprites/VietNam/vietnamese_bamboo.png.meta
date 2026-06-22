@@ -1,0 +1,191 @@
+fileFormatVersion: 2
+guid: 868d890e2e3592d47b05ba2e59ef3ca3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3598764839950261306
+    second: vietnamese_bamboo_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: vietnamese_bamboo_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1024
+        height: 1024
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline:
+      - - {x: 211, y: -407}
+        - {x: 195, y: -319}
+        - {x: 202, y: -238}
+        - {x: 229, y: -181}
+        - {x: 277, y: -202}
+        - {x: 302, y: -131}
+        - {x: 273, y: -93}
+        - {x: 242, y: -72}
+        - {x: 296, y: -38}
+        - {x: 333, y: 34}
+        - {x: 301, y: 71}
+        - {x: 307, y: 132}
+        - {x: 292, y: 174}
+        - {x: 344, y: 238}
+        - {x: 303, y: 282}
+        - {x: 278, y: 311}
+        - {x: 299, y: 381}
+        - {x: 266, y: 409}
+        - {x: 218, y: 408}
+        - {x: 165, y: 433}
+        - {x: 146, y: 480}
+        - {x: 70, y: 442}
+        - {x: -31, y: 491}
+        - {x: -100, y: 465}
+        - {x: -129, y: 429}
+        - {x: -168, y: 434}
+        - {x: -287, y: 372}
+        - {x: -327, y: 318}
+        - {x: -282, y: 282}
+        - {x: -313, y: 224}
+        - {x: -340, y: 174}
+        - {x: -330, y: 113}
+        - {x: -273, y: 100}
+        - {x: -333, y: 10}
+        - {x: -295, y: -25}
+        - {x: -276, y: -77}
+        - {x: -315, y: -158}
+        - {x: -228, y: -163}
+        - {x: -215, y: -247}
+        - {x: -256, y: -283}
+        - {x: -267, y: -338}
+        - {x: -253, y: -384}
+        - {x: -224, y: -429}
+        - {x: -272, y: -462}
+        - {x: -173, y: -493}
+        - {x: 233, y: -500}
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3c966b0e8161f130800000000000000
+      internalID: 3598764839950261306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: ce108584171e1234db453dca7fbdccfd
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":1,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      vietnamese_bamboo_0: 3598764839950261306
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
