@@ -142,6 +142,16 @@ public static class SetupUIEditor
         // Cấu hình RageBar thành chuẩn Cao Cấp
         ConfigureRageBarUI(rageBarObj);
 
+        // Tạo/Cấu hình WeatherManager (Mưa gió, sấm sét động)
+        GameObject weatherMgr = GameObject.Find("WeatherManager");
+        if (weatherMgr == null)
+        {
+            weatherMgr = new GameObject("WeatherManager");
+            weatherMgr.AddComponent<WeatherManager>();
+            Undo.RegisterCreatedObjectUndo(weatherMgr, "Tạo WeatherManager");
+            Debug.Log("[Setup] Đã tự động thêm WeatherManager vào Scene.");
+        }
+
         // Đánh dấu Scene thay đổi để lưu
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(player.scene);
@@ -152,7 +162,8 @@ public static class SetupUIEditor
             "Đã đồng bộ hóa thành công hệ thống chiến đấu:\n\n" +
             "1. Thêm thành phần PlayerStats & PlayerController vào Player.\n" +
             "2. Loại bỏ hoàn toàn các nút tròn màu trắng thô cứng (tránh lỗi Knob.psd).\n" +
-            "3. Thiết lập kích thước thanh Máu, Mana và thanh NỘ (Hào Khí Đông A) to lớn và sắc nét chuẩn Full HD (1920x1080)!\n\n" +
+            "3. Thiết lập kích thước thanh Máu, Mana và thanh NỘ (Hào Khí Đông A) to lớn và sắc nét chuẩn Full HD (1920x1080)!\n" +
+            "4. Kích hoạt hiệu ứng Thời tiết Mưa rơi & Sấm sét động (WeatherManager) đậm nét nghệ thuật!\n\n" +
             "Vui lòng nhấn Ctrl + S để lưu lại Scene.", "Tuyệt vời");
     }
 

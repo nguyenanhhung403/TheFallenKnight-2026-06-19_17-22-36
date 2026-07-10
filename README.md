@@ -60,6 +60,7 @@ Sau khi đánh bại Boss cuối **Tráng Sĩ Sơn Nam**, người chơi sẽ đ
 *   🔥 **Nộ "Hào Khí Đông A" (Phím L)**: Khi tấn công quái vật hoặc nhận sát thương, người chơi sẽ tích lũy điểm Nộ. Khi thanh Nộ đầy (100/100), nhấn **L** để bùng nổ sức mạnh. Nhân vật sẽ có hào quang đỏ rực bám theo, sát thương nhân đôi ($2\times$) và tốc độ di chuyển tăng thêm $40\%$ trong 8 giây.
 *   🎥 **Rung màn hình (Screen Shake)**: Mỗi khi đánh trúng kẻ địch hoặc bị tấn công, camera sẽ rung phản hồi chân thực.
 *   ⏳ **Khựng hình (Hit Stop)**: Dừng thời gian $0.06$ giây khi chém trúng quái vật để tạo độ đầm và độ nặng (impact) khi vung kiếm.
+*   🌦️ **Thời tiết Mưa rơi & Sấm sét động (Weather Effect)**: Hệ thống sinh hạt mưa chéo và giật chớp sét toàn màn hình hoàn toàn bằng code (procedural), kết hợp âm thanh sấm nổ trầm ấm (bằng cách làm chậm cao độ âm thanh sẵn có) tạo không khí u linh, hào hùng.
 
 ---
 
