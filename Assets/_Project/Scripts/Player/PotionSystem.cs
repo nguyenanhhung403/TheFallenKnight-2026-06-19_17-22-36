@@ -508,4 +508,26 @@ public class PotionSystem : MonoBehaviour
         }
         return null;
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // Tự động gán/sửa lại tham chiếu Sprite Việt Nam khi load dự án hoặc biên dịch
+        if (healthPotionSprite == null || healthPotionSprite.name.Contains("Potion") || healthPotionSprite.name.Contains("Jar") || healthPotionSprite.name.Contains("Heart"))
+        {
+            healthPotionSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/banh_mi.png");
+            if (healthPotionSprite != null) UnityEditor.EditorUtility.SetDirty(this);
+        }
+        if (manaPotionSprite == null || manaPotionSprite.name.Contains("Potion") || manaPotionSprite.name.Contains("Jar") || manaPotionSprite.name.Contains("Heart"))
+        {
+            manaPotionSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/tra_sua.png");
+            if (manaPotionSprite != null) UnityEditor.EditorUtility.SetDirty(this);
+        }
+        if (speedPotionSprite == null || speedPotionSprite.name.Contains("Potion") || speedPotionSprite.name.Contains("Jar") || speedPotionSprite.name.Contains("Heart"))
+        {
+            speedPotionSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Sprites/VietNam/ca_phe.png");
+            if (speedPotionSprite != null) UnityEditor.EditorUtility.SetDirty(this);
+        }
+    }
+#endif
 }

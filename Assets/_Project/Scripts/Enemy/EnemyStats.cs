@@ -225,19 +225,19 @@ public class EnemyStats : MonoBehaviour
     private void AutoAssignPotionPrefabs()
     {
         bool changed = false;
-        if (healthPotionPrefab == null)
+        if (healthPotionPrefab == null || healthPotionPrefab.name.Contains("HealthPotion"))
         {
-            healthPotionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Potions/Collectible_HealthPotion.prefab");
+            healthPotionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Potions/Collectible_BanhMi.prefab");
             if (healthPotionPrefab != null) changed = true;
         }
-        if (manaPotionPrefab == null)
+        if (manaPotionPrefab == null || manaPotionPrefab.name.Contains("ManaPotion"))
         {
-            manaPotionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Potions/Collectible_ManaPotion.prefab");
+            manaPotionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Potions/Collectible_TraSua.prefab");
             if (manaPotionPrefab != null) changed = true;
         }
-        if (speedPotionPrefab == null)
+        if (speedPotionPrefab == null || speedPotionPrefab.name.Contains("SpeedPotion"))
         {
-            speedPotionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Potions/Collectible_SpeedPotion.prefab");
+            speedPotionPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Potions/Collectible_CaPhe.prefab");
             if (speedPotionPrefab != null) changed = true;
         }
 
