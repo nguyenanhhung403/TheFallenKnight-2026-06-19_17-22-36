@@ -13,9 +13,11 @@ public class Fireball : MonoBehaviour
 
     [Header("--- Hiệu ứng ---")]
     public GameObject explosionPrefab; // Prefab nổ khi va chạm
+    public float trailInterval = 0.04f;
 
     private Vector2 moveDirection;
     private Rigidbody2D rb;
+    private float trailTimer = 0f;
 
     void Awake()
     {
@@ -69,6 +71,32 @@ public class Fireball : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        // Sinh đuôi lửa khi bay
+        trailTimer -= Time.deltaTime;
+        if (trailTimer <= 0f)
+        {
+            SpawnFireTrail();
+            trailTimer = trailInterval;
+        }
+    }
+
+    private void SpawnFireTrail()
+    {
+        GameObject trail = new GameObject("FireballTrail");
+        Vector3 offset = -moveDirection * 0.3f + (Vector2)Random.insideUnitCircle * 0.12f;
+        trail.transform.position = transform.position + offset;
+
+        SpriteRenderer sr = trail.AddComponent<SpriteRenderer>();
+        sr.sprite = CreateCircleSprite(16, Color.white);
+        sr.color = new Color(1f, Random.Range(0.4f, 0.8f), 0.05f, 0.75f);
+        sr.sortingOrder = 5;
+
+        FireTrailParticle script = trail.AddComponent<FireTrailParticle>();
+        script.Setup(Random.Range(0.2f, 0.32f));
+    }
+
     void FixedUpdate()
     {
         // Dự phòng di chuyển nếu Rigidbody2D bị tắt hoặc không hoạt động
@@ -120,17 +148,41 @@ public class Fireball : MonoBehaviour
 
     private void CreateProceduralExplosion()
     {
+        // 1. Quả cầu lửa nổ lan tỏa trung tâm
         GameObject expObj = new GameObject("ProceduralExplosion");
         expObj.transform.position = transform.position;
         
         SpriteRenderer sr = expObj.AddComponent<SpriteRenderer>();
         sr.sprite = CreateCircleSprite(32, Color.white);
-        sr.color = new Color(1f, 0.4f, 0f, 0.8f); // Màu cam đỏ lửa
+        sr.color = new Color(1f, 0.5f, 0f, 0.85f);
         sr.sortingOrder = 6;
         
         ProceduralExplosionEffect effect = expObj.AddComponent<ProceduralExplosionEffect>();
-        effect.duration = 0.35f;
-        effect.maxScale = 1.6f;
+        effect.duration = 0.4f;
+        effect.maxScale = 1.8f;
+
+        // Rung camera khi nổ gần player
+        if (CameraFollow.Instance != null)
+        {
+            CameraFollow.Instance.TriggerShake(0.18f, 0.22f);
+        }
+
+        // 2. Bắn thêm 10-14 hạt tia lửa bay tóe ra xung quanh
+        int sparkCount = Random.Range(10, 15);
+        for (int i = 0; i < sparkCount; i++)
+        {
+            GameObject spark = new GameObject("FireballExplosionSpark");
+            spark.transform.position = transform.position;
+
+            SpriteRenderer sparkSr = spark.AddComponent<SpriteRenderer>();
+            sparkSr.sprite = CreateCircleSprite(16, Color.white);
+            sparkSr.color = new Color(1f, Random.Range(0.6f, 0.95f), 0.1f, 0.95f);
+            sparkSr.sortingOrder = 6;
+
+            FireballExplosionSpark script = spark.AddComponent<FireballExplosionSpark>();
+            Vector2 dir = Random.insideUnitCircle.normalized;
+            script.Setup(dir, Random.Range(4.5f, 9.5f), Random.Range(0.3f, 0.45f));
+        }
     }
 
     private Sprite CreateCircleSprite(int size, Color color)
@@ -199,6 +251,104 @@ public class ProceduralExplosionEffect : MonoBehaviour
         if (sr != null)
         {
             sr.color = Color.Lerp(startColor, endColor, progress);
+        }
+    }
+}
+
+/// <summary>
+/// Hiệu ứng khí nóng/đốm lửa bay bốc lên nhẹ nhàng phía sau quả cầu lửa
+/// </summary>
+public class FireTrailParticle : MonoBehaviour
+{
+    private float lifeTime;
+    private float elapsed = 0f;
+    private Color startColor;
+    private Color endColor;
+    private Vector3 startScale;
+
+    public void Setup(float duration)
+    {
+        lifeTime = duration;
+        startScale = new Vector3(Random.Range(0.4f, 0.8f), Random.Range(0.4f, 0.8f), 1f);
+        transform.localScale = startScale;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            startColor = sr.color;
+            endColor = new Color(0.8f, 0.1f, 0f, 0f); // Mờ dần thành đỏ rồi trong suốt
+        }
+    }
+
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        float progress = elapsed / lifeTime;
+
+        // Hơi bay lên trên một chút (như khí nóng bốc lên)
+        transform.position += Vector3.up * 1.5f * Time.deltaTime;
+
+        // Thu nhỏ và mờ dần
+        transform.localScale = Vector3.Lerp(startScale, Vector3.zero, progress);
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = Color.Lerp(startColor, endColor, progress);
+        }
+
+        if (elapsed >= lifeTime)
+        {
+            Destroy(gameObject);
+        }
+    }
+}
+
+/// <summary>
+/// Hạt tia lửa nhỏ bắn tung tóe hướng 360 độ chịu ảnh hưởng của trọng lực khi nổ
+/// </summary>
+public class FireballExplosionSpark : MonoBehaviour
+{
+    private Vector2 velocity;
+    private float gravity = 15f;
+    private float lifeTime;
+    private float elapsed = 0f;
+    private Color startColor;
+    private Color endColor;
+    private Vector3 startScale;
+
+    public void Setup(Vector2 dir, float speed, float duration)
+    {
+        velocity = dir * speed;
+        lifeTime = duration;
+        startScale = new Vector3(Random.Range(0.15f, 0.3f), Random.Range(0.15f, 0.3f), 1f);
+        transform.localScale = startScale;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            startColor = sr.color;
+            endColor = new Color(0.8f, 0f, 0f, 0f);
+        }
+    }
+
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        float progress = elapsed / lifeTime;
+
+        velocity.y -= gravity * Time.deltaTime; // Trọng lực kéo hạt xuống
+        transform.position += (Vector3)velocity * Time.deltaTime;
+
+        transform.localScale = Vector3.Lerp(startScale, Vector3.zero, progress);
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = Color.Lerp(startColor, endColor, progress);
+        }
+
+        if (elapsed >= lifeTime)
+        {
+            Destroy(gameObject);
         }
     }
 }

@@ -47,6 +47,10 @@ public class PlayerController : MonoBehaviour
     private Color originalColor;
     private Coroutine flashCoroutine;
 
+    // Biến phụ trợ khói bụi
+    private bool wasGroundedLastFrame = true;
+    private float runDustTimer = 0f;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -107,6 +111,24 @@ public class PlayerController : MonoBehaviour
         else
         {
             isGrounded = Mathf.Abs(rb.linearVelocity.y) < 0.05f;
+        }
+
+        // Kiểm tra tiếp đất để spawn bụi
+        if (isGrounded && !wasGroundedLastFrame)
+        {
+            SpawnLandingDust();
+        }
+        wasGroundedLastFrame = isGrounded;
+
+        // Sinh bụi khi chạy trên mặt đất
+        if (isGrounded && Mathf.Abs(horizontalInput) > 0.1f && !isAttacking && !isDefending)
+        {
+            runDustTimer -= Time.deltaTime;
+            if (runDustTimer <= 0f)
+            {
+                SpawnRunDust();
+                runDustTimer = 0.18f;
+            }
         }
 
         // 5. Bộ an toàn: Tự động reset isAttacking nếu animation event bị bỏ lỡ
@@ -178,6 +200,7 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
             anim.SetTrigger("Jump"); // Kích hoạt animation Nhảy
             AudioManager.Instance.PlaySFX(SoundEffect.Jump);
+            SpawnJumpDust(); // Sinh bụi khi nhảy
         }
     }
 
@@ -575,6 +598,8 @@ public class PlayerController : MonoBehaviour
                 if (target.CompareTag("Enemy"))
                 {
                     hitAnyEnemy = true;
+                    // Sinh tia lửa rực rỡ tại vị trí quái vật bị chém trúng
+                    SpawnHitSparks(target.transform.position + Vector3.up * 0.4f);
                 }
             }
         }
@@ -804,6 +829,107 @@ public class PlayerController : MonoBehaviour
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.1f, 0.5f), 16f); // Đặt PPU = 16f
     }
+
+    public void SpawnHitSparks(Vector3 pos)
+    {
+        // Gấp đôi số lượng tia lửa (16 - 28 hạt)
+        int count = Random.Range(16, 28);
+        for (int i = 0; i < count; i++)
+        {
+            GameObject spark = new GameObject("HitSparkParticle");
+            spark.transform.position = pos;
+
+            SpriteRenderer sr = spark.AddComponent<SpriteRenderer>();
+            sr.sprite = CreateCircleSprite(16, Color.white);
+            // Độ mờ tối đa (alpha = 1.0f) để cực kỳ rõ nét
+            sr.color = new Color(1f, Random.Range(0.7f, 1f), 0f, 1f);
+            sr.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder + 3 : 10;
+
+            SparkParticle script = spark.AddComponent<SparkParticle>();
+            Vector2 randomDir = new Vector2(
+                (isFacingRight ? Random.Range(0.1f, 1f) : Random.Range(-1f, -0.1f)), 
+                Random.Range(-0.7f, 0.9f)
+            ).normalized;
+            script.Setup(randomDir, Random.Range(4.5f, 8.5f));
+        }
+    }
+
+    public void SpawnJumpDust()
+    {
+        // Gấp đôi số hạt bụi nhảy (12 hạt)
+        int count = 12;
+        for (int i = 0; i < count; i++)
+        {
+            GameObject dust = new GameObject("JumpDustParticle");
+            dust.transform.position = spawnPos();
+
+            SpriteRenderer sr = dust.AddComponent<SpriteRenderer>();
+            sr.sprite = CreateCircleSprite(32, Color.white);
+            // Tăng mạnh độ mờ lên 0.7f
+            sr.color = new Color(0.9f, 0.9f, 0.9f, 0.7f);
+            sr.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder - 1 : 4;
+
+            DustParticle script = dust.AddComponent<DustParticle>();
+            Vector2 dir = new Vector2(Random.Range(-1f, 1f), Random.Range(0.15f, 0.5f)).normalized;
+            script.Setup(dir, Random.Range(1f, 2.2f), 0.3f);
+        }
+
+        Vector3 spawnPos()
+        {
+            return transform.position + new Vector3(0f, -0.9f, 0f);
+        }
+    }
+
+    public void SpawnLandingDust()
+    {
+        // Gấp đôi số hạt bụi tiếp đất (16 hạt)
+        int count = 16;
+        for (int i = 0; i < count; i++)
+        {
+            GameObject dust = new GameObject("LandingDustParticle");
+            dust.transform.position = spawnPos();
+
+            SpriteRenderer sr = dust.AddComponent<SpriteRenderer>();
+            sr.sprite = CreateCircleSprite(32, Color.white);
+            // Tăng mạnh độ mờ lên 0.75f
+            sr.color = new Color(0.9f, 0.9f, 0.9f, 0.75f);
+            sr.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder - 1 : 4;
+
+            DustParticle script = dust.AddComponent<DustParticle>();
+            Vector2 dir = new Vector2(Random.Range(-1.3f, 1.3f), Random.Range(0.05f, 0.25f)).normalized;
+            script.Setup(dir, Random.Range(1.8f, 3.2f), 0.35f);
+        }
+
+        Vector3 spawnPos()
+        {
+            return transform.position + new Vector3(0f, -0.9f, 0f);
+        }
+    }
+
+    private void SpawnRunDust()
+    {
+        // Spawn 2 cụm bụi mỗi bước chạy để hiệu ứng dày đặc hơn
+        for (int j = 0; j < 2; j++)
+        {
+            GameObject dust = new GameObject("RunDustParticle");
+            dust.transform.position = spawnPos();
+
+            SpriteRenderer sr = dust.AddComponent<SpriteRenderer>();
+            sr.sprite = CreateCircleSprite(16, Color.white);
+            // Tăng độ mờ lên 0.65f
+            sr.color = new Color(0.9f, 0.9f, 0.9f, 0.65f);
+            sr.sortingOrder = spriteRenderer != null ? spriteRenderer.sortingOrder - 1 : 4;
+
+            DustParticle script = dust.AddComponent<DustParticle>();
+            Vector2 dir = new Vector2(isFacingRight ? -1f : 1f, Random.Range(0.1f, 0.35f)).normalized;
+            script.Setup(dir, Random.Range(0.7f, 1.3f), 0.25f);
+        }
+
+        Vector3 spawnPos()
+        {
+            return transform.position + new Vector3(isFacingRight ? -0.4f : 0.4f, -0.9f, 0f);
+        }
+    }
 }
 
 /// <summary>
@@ -978,6 +1104,108 @@ public class SlashMovement : MonoBehaviour
             Color c = sr.color;
             c.a = Mathf.Lerp(0.95f, 0f, progress);
             sr.color = c;
+        }
+    }
+}
+
+/// <summary>
+/// Hiệu ứng tia lửa vật lý rơi theo đồ thị Parabol (trọng lực)
+/// </summary>
+public class SparkParticle : MonoBehaviour
+{
+    private Vector2 velocity;
+    private float gravity = 16f;
+    private float lifeTime = 0.32f;
+    private float elapsed = 0f;
+    private Color startColor;
+    private Color endColor;
+    private Vector3 startScale;
+
+    public void Setup(Vector2 dir, float speed)
+    {
+        velocity = dir * speed;
+        // Gấp đôi kích thước hạt tia lửa
+        startScale = new Vector3(Random.Range(0.2f, 0.45f), Random.Range(0.2f, 0.45f), 1f);
+        transform.localScale = startScale;
+        
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            startColor = sr.color;
+            endColor = new Color(1f, 0.15f, 0f, 0f); 
+        }
+    }
+
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        float progress = elapsed / lifeTime;
+
+        velocity.y -= gravity * Time.deltaTime;
+        transform.position += (Vector3)velocity * Time.deltaTime;
+
+        transform.localScale = Vector3.Lerp(startScale, Vector3.zero, progress);
+        
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = Color.Lerp(startColor, endColor, progress);
+        }
+
+        if (elapsed >= lifeTime)
+        {
+            Destroy(gameObject);
+        }
+    }
+}
+
+/// <summary>
+/// Hiệu ứng bụi khói bốc lên phồng to và loãng dần rồi tan biến
+/// </summary>
+public class DustParticle : MonoBehaviour
+{
+    private Vector2 velocity;
+    private float drag = 4.2f;
+    private float lifeTime;
+    private float elapsed = 0f;
+    private Color startColor;
+    private Vector3 startScale;
+
+    public void Setup(Vector2 dir, float speed, float duration)
+    {
+        velocity = dir * speed;
+        lifeTime = duration;
+        // Gấp đôi kích thước hạt bụi khói
+        startScale = new Vector3(Random.Range(0.36f, 0.65f), Random.Range(0.36f, 0.65f), 1f);
+        transform.localScale = startScale;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            startColor = sr.color;
+        }
+    }
+
+    void Update()
+    {
+        elapsed += Time.deltaTime;
+        float progress = elapsed / lifeTime;
+
+        velocity = Vector2.MoveTowards(velocity, Vector2.zero, drag * Time.deltaTime);
+        transform.position += (Vector3)velocity * Time.deltaTime;
+
+        float scaleMultiplier = Mathf.Lerp(1f, 1.5f, progress);
+        transform.localScale = startScale * scaleMultiplier;
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = new Color(startColor.r, startColor.g, startColor.b, Mathf.Lerp(startColor.a, 0f, progress));
+        }
+
+        if (elapsed >= lifeTime)
+        {
+            Destroy(gameObject);
         }
     }
 }

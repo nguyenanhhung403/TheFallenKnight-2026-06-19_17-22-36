@@ -26,6 +26,7 @@ public class EnemyStats : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
     private bool isDead = false;
+    private EnemyHealthBar healthBar;
 
     void Awake()
     {
@@ -45,6 +46,17 @@ public class EnemyStats : MonoBehaviour
 #if UNITY_EDITOR
         AutoAssignPotionPrefabs();
 #endif
+
+        // Tự động tạo thanh máu trên đầu
+        GameObject barObj = new GameObject(gameObject.name + "_HPBar");
+        healthBar = barObj.AddComponent<EnemyHealthBar>();
+        
+        float offsetHeight = 1.2f;
+        if (spriteRenderer != null)
+        {
+            offsetHeight = spriteRenderer.bounds.extents.y + 0.3f;
+        }
+        healthBar.Setup(transform, this, offsetHeight);
     }
 
     /// <summary>
@@ -58,6 +70,12 @@ public class EnemyStats : MonoBehaviour
         currentHealth = Mathf.Max(currentHealth, 0);
 
         Debug.Log($"[EnemyStats] {gameObject.name} nhận {amount} sát thương. Máu còn lại: {currentHealth}/{maxHealth}");
+
+        // Hiển thị thanh máu trên đầu
+        if (healthBar != null)
+        {
+            healthBar.Show();
+        }
 
         // Hiệu ứng chớp đỏ báo hiệu bị thương
         StartCoroutine(FlashRed());
@@ -85,6 +103,11 @@ public class EnemyStats : MonoBehaviour
     private void Die(EnemySpriteAnimator anim, EnemyAI ai)
     {
         isDead = true;
+
+        if (healthBar != null)
+        {
+            Destroy(healthBar.gameObject);
+        }
 
         if (anim != null)
         {
@@ -271,5 +294,135 @@ public class EnemyStats : MonoBehaviour
 
         Debug.LogWarning("[EnemyStats] Không tìm thấy BossDefeatedPanel trong Scene, quay lại Main Menu...");
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuScene");
+    }
+
+    void OnDestroy()
+    {
+        if (healthBar != null)
+        {
+            Destroy(healthBar.gameObject);
+        }
+    }
+}
+
+/// <summary>
+/// Thanh máu nhỏ gọn hiển thị phía trên đầu quái vật khi nhận sát thương
+/// </summary>
+public class EnemyHealthBar : MonoBehaviour
+{
+    private Transform enemy;
+    private EnemyStats stats;
+    private float heightOffset = 1.2f;
+    private float hideTimer = 0f;
+    private float showDuration = 2.5f;
+
+    private SpriteRenderer bgRenderer;
+    private SpriteRenderer fillRenderer;
+    
+    private float targetFillScaleX = 1f;
+    private float currentFillScaleX = 1f;
+
+    public void Setup(Transform enemyTransform, EnemyStats enemyStats, float offset)
+    {
+        enemy = enemyTransform;
+        stats = enemyStats;
+        heightOffset = offset;
+        
+        // Ẩn ban đầu
+        gameObject.SetActive(false);
+    }
+
+    void Start()
+    {
+        Sprite barSprite = CreateBarSprite();
+
+        // 1. Tạo Background (Đen)
+        GameObject bgObj = new GameObject("HPBar_BG");
+        bgObj.transform.SetParent(transform);
+        bgObj.transform.localPosition = Vector3.zero;
+        bgObj.transform.localScale = new Vector3(1.2f, 0.16f, 1f);
+
+        bgRenderer = bgObj.AddComponent<SpriteRenderer>();
+        bgRenderer.sprite = barSprite;
+        bgRenderer.color = new Color(0.1f, 0.1f, 0.1f, 0.85f);
+        bgRenderer.sortingOrder = 30;
+
+        // 2. Tạo Fill (Đỏ/Xanh)
+        GameObject fillObj = new GameObject("HPBar_Fill");
+        fillObj.transform.SetParent(transform);
+        fillObj.transform.localPosition = new Vector3(-0.6f, 0f, 0f);
+        fillObj.transform.localScale = new Vector3(1.2f, 0.16f, 1f);
+
+        fillRenderer = fillObj.AddComponent<SpriteRenderer>();
+        fillRenderer.sprite = barSprite;
+        fillRenderer.color = new Color(0.9f, 0.15f, 0.15f, 0.95f);
+        fillRenderer.sortingOrder = 31;
+    }
+
+    public void Show()
+    {
+        gameObject.SetActive(true);
+        hideTimer = showDuration;
+        UpdateBarVisuals();
+    }
+
+    void LateUpdate()
+    {
+        if (enemy == null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        // Bám theo vị trí của quái vật trong World Space
+        transform.position = enemy.position + Vector3.up * heightOffset;
+
+        hideTimer -= Time.deltaTime;
+        if (hideTimer <= 0f)
+        {
+            gameObject.SetActive(false);
+        }
+
+        if (stats != null)
+        {
+            float pct = (float)stats.currentHealth / stats.maxHealth;
+            targetFillScaleX = pct * 1.2f;
+        }
+        currentFillScaleX = Mathf.MoveTowards(currentFillScaleX, targetFillScaleX, 3f * Time.deltaTime);
+        
+        if (fillRenderer != null)
+        {
+            fillRenderer.transform.localScale = new Vector3(currentFillScaleX, 0.16f, 1f);
+            fillRenderer.transform.localPosition = new Vector3(-0.6f + (currentFillScaleX / 2f), 0f, 0f);
+            
+            float pct = stats != null ? (float)stats.currentHealth / stats.maxHealth : 1f;
+            fillRenderer.color = Color.Lerp(new Color(0.9f, 0.15f, 0.15f, 0.95f), new Color(0.2f, 0.85f, 0.2f, 0.95f), pct);
+        }
+    }
+
+    private void UpdateBarVisuals()
+    {
+        if (stats != null)
+        {
+            float pct = (float)stats.currentHealth / stats.maxHealth;
+            targetFillScaleX = pct * 1.2f;
+            currentFillScaleX = targetFillScaleX;
+        }
+    }
+
+    private Sprite CreateBarSprite()
+    {
+        int w = 16;
+        int h = 4;
+        Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        Color[] pixels = new Color[w * h];
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = Color.white;
+        }
+        tex.SetPixels(pixels);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 16f);
     }
 }
