@@ -255,6 +255,12 @@ public class EnemyStats : MonoBehaviour
         // Dừng nhạc nền để chuyển sang không khí u sầu đối thoại
         AudioManager.Instance.StopBGM();
 
+        // Tắt sấm sét và thời tiết khi Boss ngã xuống
+        if (WeatherManager.Instance != null)
+        {
+            WeatherManager.Instance.StopWeather();
+        }
+
         // Kích hoạt cuộc đối thoại trăn trối khi Boss bại trận
         PlayerController player = Object.FindAnyObjectByType<PlayerController>();
         if (player != null && DialogueManager.Instance != null)

@@ -16,6 +16,7 @@ public class WeatherManager : MonoBehaviour
     public float windAngle = 15f;         // Góc nghiêng của gió/mưa (độ)
 
     [Header("--- Cấu hình Sấm Sét ---")]
+    public bool enableLightning = true;
     public float minLightningInterval = 12f;
     public float maxLightningInterval = 25f;
 
@@ -174,11 +175,14 @@ public class WeatherManager : MonoBehaviour
         }
 
         // 2. Bộ đếm sấm sét
-        lightningTimer -= Time.deltaTime;
-        if (lightningTimer <= 0f)
+        if (enableLightning)
         {
-            StartCoroutine(TriggerLightningFlash());
-            lightningTimer = Random.Range(minLightningInterval, maxLightningInterval);
+            lightningTimer -= Time.deltaTime;
+            if (lightningTimer <= 0f)
+            {
+                StartCoroutine(TriggerLightningFlash());
+                lightningTimer = Random.Range(minLightningInterval, maxLightningInterval);
+            }
         }
     }
 
@@ -255,6 +259,30 @@ public class WeatherManager : MonoBehaviour
         tex.SetPixels(pixels);
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 16f);
+    }
+
+    public void StopWeather()
+    {
+        isRaining = false;
+        enableLightning = false;
+        enableLeaves = false;
+
+        // Ẩn tất cả hạt mưa
+        if (rainPool != null)
+        {
+            foreach (var drop in rainPool)
+            {
+                if (drop != null) drop.SetActive(false);
+            }
+        }
+        // Ẩn tất cả lá rụng
+        if (leafPool != null)
+        {
+            foreach (var leaf in leafPool)
+            {
+                if (leaf != null) leaf.SetActive(false);
+            }
+        }
     }
 
     private void InitializeLeafPool()
