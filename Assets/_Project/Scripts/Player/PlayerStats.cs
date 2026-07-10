@@ -280,7 +280,7 @@ public class PlayerStats : MonoBehaviour
             float targetAlpha = Mathf.Lerp(0.2f, 1f, pulse) * Mathf.Lerp(0.4f, 0.95f, 1f - (hpPct / 0.3f));
             
             Color c = lowHPVignette.color;
-            lowHPVignette.color = new Color(c.r, c.g, c.b, Mathf.MoveTowards(c.color.a, targetAlpha, 2f * Time.deltaTime));
+            lowHPVignette.color = new Color(c.r, c.g, c.b, Mathf.MoveTowards(c.a, targetAlpha, 2f * Time.deltaTime));
         }
         else
         {
@@ -288,7 +288,7 @@ public class PlayerStats : MonoBehaviour
             Color c = lowHPVignette.color;
             if (c.a > 0f)
             {
-                lowHPVignette.color = new Color(c.r, c.g, c.b, Mathf.MoveTowards(c.color.a, 0f, 2f * Time.deltaTime));
+                lowHPVignette.color = new Color(c.r, c.g, c.b, Mathf.MoveTowards(c.a, 0f, 2f * Time.deltaTime));
             }
         }
     }
