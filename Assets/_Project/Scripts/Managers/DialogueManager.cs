@@ -216,20 +216,9 @@ public class DialogueManager : MonoBehaviour
         {
             originalCamTarget = CameraFollow.Instance.target;
             originalCamSize = Camera.main.orthographicSize;
-
-            // Tìm Boss để tính toán trung điểm
-            GameObject boss = GameObject.Find("Boss_UndeadExecutioner");
-            if (player != null && boss != null)
-            {
-                cameraMidpointTarget = new GameObject("CamDialogueMidpoint");
-                cameraMidpointTarget.transform.position = (player.transform.position + boss.transform.position) / 2f + Vector3.up * 0.5f;
-
-                // Trỏ camera vào trung điểm
-                CameraFollow.Instance.target = cameraMidpointTarget.transform;
-                
-                // Zoom cận cảnh điện ảnh
-                StartCoroutine(AnimateCameraZoom(Camera.main, 3.6f, 0.8f));
-            }
+            
+            // Zoom cận cảnh điện ảnh
+            StartCoroutine(AnimateCameraZoom(Camera.main, 3.6f, 0.8f));
         }
     }
 
@@ -244,6 +233,12 @@ public class DialogueManager : MonoBehaviour
         DialogueLine line = dialogueLines[currentLineIndex];
         speakerNameText.text = line.speakerName;
         targetFullText = line.text;
+
+        // Trỏ camera vào người đang nói để camera tự động lia (pan) mượt mà đến đó
+        if (CameraFollow.Instance != null && line.speakerTransform != null)
+        {
+            CameraFollow.Instance.target = line.speakerTransform;
+        }
 
         // Hiện bong bóng hội thoại và đặt vị trí trên đầu nhân vật nói
         bubbleCanvasObj.SetActive(true);
