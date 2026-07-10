@@ -121,15 +121,15 @@ public class DialogueManager : MonoBehaviour
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.sortingOrder = 25; // Render phía trên Sprite nhân vật
 
-        // Đặt kích thước và tỉ lệ của Canvas thế giới
+        // Đặt kích thước và tỉ lệ của Canvas thế giới (Tăng kích thước lên 450x160)
         RectTransform canvasRect = bubbleCanvasObj.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(300f, 140f); // Tăng chiều cao lên 140 để thoải mái chứa 5 dòng chữ thoại
+        canvasRect.sizeDelta = new Vector2(450f, 160f); // Kích thước của bong bóng hội thoại rộng rãi hơn
         canvasRect.localScale = new Vector3(0.015f, 0.015f, 1f); // Tỉ lệ quy đổi ra World Space
 
         CanvasScaler scaler = bubbleCanvasObj.AddComponent<CanvasScaler>();
         scaler.dynamicPixelsPerUnit = 20;
 
-        // Panel nền bong bóng hội thoại (Kích thước 300x140 cố định)
+        // Panel nền bong bóng hội thoại (Kích thước 450x160 cố định)
         GameObject bgObj = new GameObject("BubbleBG");
         bgObj.transform.SetParent(bubbleCanvasObj.transform, false);
         bubbleBG = bgObj.AddComponent<Image>();
@@ -142,10 +142,10 @@ public class DialogueManager : MonoBehaviour
         rectBG.anchorMax = new Vector2(0.5f, 0.5f);
         rectBG.pivot = new Vector2(0.5f, 0.5f);
         rectBG.anchoredPosition = Vector2.zero;
-        rectBG.sizeDelta = new Vector2(300f, 140f); // Định kích thước khung đen cố định
+        rectBG.sizeDelta = new Vector2(450f, 160f); // Định kích thước khung đen rộng rãi hơn
         rectBG.localScale = Vector3.one;
 
-        // Tên người nói (Kích thước 270x25 cố định, neo trên)
+        // Tên người nói (Kích thước 410x25 cố định, neo trên)
         GameObject nameObj = new GameObject("SpeakerNameText");
         nameObj.transform.SetParent(bgObj.transform, false);
         speakerNameText = nameObj.AddComponent<Text>();
@@ -160,11 +160,11 @@ public class DialogueManager : MonoBehaviour
         rectName.anchorMin = new Vector2(0.5f, 1f); // Neo ở giữa-trên
         rectName.anchorMax = new Vector2(0.5f, 1f);
         rectName.pivot = new Vector2(0.5f, 1f);
-        rectName.anchoredPosition = new Vector2(0f, -12f); // Cách lề trên 12px
-        rectName.sizeDelta = new Vector2(270f, 25f); // Chiều ngang 270 nhỏ hơn khung đen 300
+        rectName.anchoredPosition = new Vector2(0f, -15f); // Cách lề trên 15px
+        rectName.sizeDelta = new Vector2(410f, 25f); // Chiều ngang 410 nhỏ hơn khung đen 450
         rectName.localScale = Vector3.one;
 
-        // Nội dung thoại (Kích thước 270x90 cố định, neo dưới tên)
+        // Nội dung thoại (Kích thước 410x100 cố định, tự động co giãn size chữ để vừa khung)
         GameObject textObj = new GameObject("DialogueText");
         textObj.transform.SetParent(bgObj.transform, false);
         bubbleText = textObj.AddComponent<Text>();
@@ -173,14 +173,19 @@ public class DialogueManager : MonoBehaviour
         bubbleText.alignment = TextAnchor.UpperLeft;
         bubbleText.color = Color.white;
         bubbleText.horizontalOverflow = HorizontalWrapMode.Wrap;
-        bubbleText.verticalOverflow = VerticalWrapMode.Overflow;
+        bubbleText.verticalOverflow = VerticalWrapMode.Truncate; // Sử dụng Truncate kết hợp với Best Fit
+
+        // Kích hoạt tính năng tự động co giãn cỡ chữ của Unity (Best Fit)
+        bubbleText.resizeTextForBestFit = true;
+        bubbleText.resizeTextMinSize = 11; // Cỡ chữ tối thiểu
+        bubbleText.resizeTextMaxSize = 18; // Cỡ chữ tối đa
 
         RectTransform rectText = bubbleText.rectTransform;
         rectText.anchorMin = new Vector2(0.5f, 1f); // Neo ở giữa-trên
         rectText.anchorMax = new Vector2(0.5f, 1f);
         rectText.pivot = new Vector2(0.5f, 1f);
-        rectText.anchoredPosition = new Vector2(0f, -42f); // Đặt phía dưới SpeakerNameText
-        rectText.sizeDelta = new Vector2(270f, 90f); // Chiều ngang 270 (nhỏ hơn khung đen 300) bảo đảm không bao giờ tràn
+        rectText.anchoredPosition = new Vector2(0f, -45f); // Đặt phía dưới SpeakerNameText
+        rectText.sizeDelta = new Vector2(410f, 100f); // Chiều ngang 410 (nhỏ hơn khung đen 450)
         rectText.localScale = Vector3.one;
 
         bubbleCanvasObj.SetActive(false);
