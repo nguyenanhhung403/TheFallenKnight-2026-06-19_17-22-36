@@ -134,7 +134,7 @@ public class DialogueManager : MonoBehaviour
         bubbleBG.sprite = CreateRoundedRectSprite();
 
         RectTransform rectBG = bubbleBG.rectTransform;
-        rectBG.sizeDelta = new Vector2(250f, 85f); // Kích thước dẹt
+        rectBG.sizeDelta = new Vector2(300f, 110f); // Tăng kích thước khung để chứa được nhiều chữ hơn
         rectBG.localScale = new Vector3(0.015f, 0.015f, 1f); // Quy đổi World Space
 
         // Tên người nói
@@ -145,12 +145,14 @@ public class DialogueManager : MonoBehaviour
         speakerNameText.fontSize = 20;
         speakerNameText.alignment = TextAnchor.UpperLeft;
         speakerNameText.color = new Color(1f, 0.84f, 0f, 1f); // Màu vàng hoàng gia
+        speakerNameText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        speakerNameText.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rectName = speakerNameText.rectTransform;
         rectName.anchorMin = Vector2.zero;
         rectName.anchorMax = Vector2.one;
         rectName.pivot = new Vector2(0.5f, 0.5f);
-        rectName.offsetMin = new Vector2(12f, 50f);
+        rectName.offsetMin = new Vector2(12f, 78f);
         rectName.offsetMax = new Vector2(-12f, -8f);
 
         // Nội dung thoại
@@ -161,13 +163,15 @@ public class DialogueManager : MonoBehaviour
         bubbleText.fontSize = 18;
         bubbleText.alignment = TextAnchor.UpperLeft;
         bubbleText.color = Color.white;
+        bubbleText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        bubbleText.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rectText = bubbleText.rectTransform;
         rectText.anchorMin = Vector2.zero;
         rectText.anchorMax = Vector2.one;
         rectText.pivot = new Vector2(0.5f, 0.5f);
         rectText.offsetMin = new Vector2(12f, 10f);
-        rectText.offsetMax = new Vector2(-12f, -32f);
+        rectText.offsetMax = new Vector2(-12f, -35f);
 
         bubbleCanvasObj.SetActive(false);
     }
