@@ -38,6 +38,9 @@ public class EnemyAI : MonoBehaviour
     private bool isHurt = false;
     private float hurtTimer = 0f;
 
+    [HideInInspector]
+    public bool isFrozen = false;
+
     void Start()
     {
         startPos = transform.position;
@@ -65,6 +68,19 @@ public class EnemyAI : MonoBehaviour
     void Update()
     {
         if (isDead) return;
+
+        if (isFrozen)
+        {
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+            if (animator != null)
+            {
+                animator.PlayAnimation(EnemyState.Idle);
+            }
+            return;
+        }
 
         // Bị choáng khi nhận sát thương
         if (isHurt)
@@ -347,5 +363,21 @@ public class EnemyAI : MonoBehaviour
         box.size = new Vector2(0.8f, 0.2f);
 
         return arrow;
+    }
+
+    public void FreezeAI(bool freeze)
+    {
+        isFrozen = freeze;
+        if (freeze)
+        {
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+            if (animator != null)
+            {
+                animator.PlayAnimation(EnemyState.Idle);
+            }
+        }
     }
 }

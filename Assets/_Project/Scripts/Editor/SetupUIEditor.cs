@@ -152,6 +152,23 @@ public static class SetupUIEditor
             Debug.Log("[Setup] Đã tự động thêm WeatherManager vào Scene.");
         }
 
+        // Tự động kiểm tra và thêm Boss Cutscene Trigger cho Boss hiện có
+        GameObject boss = GameObject.Find("Boss_UndeadExecutioner");
+        if (boss != null)
+        {
+            GameObject existingTrigger = GameObject.Find("Boss_CutsceneTrigger");
+            if (existingTrigger == null)
+            {
+                existingTrigger = new GameObject("Boss_CutsceneTrigger");
+                existingTrigger.transform.position = boss.transform.position + Vector3.left * 5f;
+                BossCutsceneTrigger trig = existingTrigger.AddComponent<BossCutsceneTrigger>();
+                trig.triggerWidth = 4f;
+                trig.triggerHeight = 6f;
+                Undo.RegisterCreatedObjectUndo(existingTrigger, "Tạo Boss Cutscene Trigger");
+                Debug.Log("[Setup] Đã tự động thêm Boss Cutscene Trigger vào Scene.");
+            }
+        }
+
         // Đánh dấu Scene thay đổi để lưu
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(player.scene);
@@ -163,7 +180,8 @@ public static class SetupUIEditor
             "1. Thêm thành phần PlayerStats & PlayerController vào Player.\n" +
             "2. Loại bỏ hoàn toàn các nút tròn màu trắng thô cứng (tránh lỗi Knob.psd).\n" +
             "3. Thiết lập kích thước thanh Máu, Mana và thanh NỘ (Hào Khí Đông A) to lớn và sắc nét chuẩn Full HD (1920x1080)!\n" +
-            "4. Kích hoạt hiệu ứng Thời tiết Mưa rơi & Sấm sét động (WeatherManager) đậm nét nghệ thuật!\n\n" +
+            "4. Kích hoạt hiệu ứng Thời tiết Mưa rơi & Sấm sét động (WeatherManager) đậm nét nghệ thuật!\n" +
+            "5. Đã tự động cấu hình vùng Cắt cảnh hội thoại điện ảnh (Boss_CutsceneTrigger) phía trước quái vật Boss!\n\n" +
             "Vui lòng nhấn Ctrl + S để lưu lại Scene.", "Tuyệt vời");
     }
 
@@ -2229,8 +2247,16 @@ public static class SetupUIEditor
         ai.attackDamage = 25;
         ai.isRanged = false;      // Boss cận chiến chém đao cực uy lực
 
+        // 10. Tạo vùng Trigger hội thoại cách Boss 5 mét về bên trái
+        GameObject triggerObj = new GameObject("Boss_CutsceneTrigger");
+        triggerObj.transform.position = bossObj.transform.position + Vector3.left * 5f;
+        BossCutsceneTrigger trigger = triggerObj.AddComponent<BossCutsceneTrigger>();
+        trigger.triggerWidth = 4f;
+        trigger.triggerHeight = 6f;
+
         // Đăng ký Undo và chọn đối tượng mới tạo trong Hierarchy
         Undo.RegisterCreatedObjectUndo(bossObj, "Tạo Boss Undead Executioner");
+        Undo.RegisterCreatedObjectUndo(triggerObj, "Tạo Boss Cutscene Trigger");
         Selection.activeGameObject = bossObj;
 
         EditorUtility.DisplayDialog("Thành công", 
@@ -2238,7 +2264,8 @@ public static class SetupUIEditor
             "1. Tự động đồng bộ toàn bộ file sprite sheets về PPU = 16 và Point Filter.\n" +
             "2. Đã tự động cắt và gán tất cả Sprite từ file gốc (Idle, Idle2 làm Walk, Attacking, Skill1, Death).\n" +
             "3. Máu boss được tăng gấp 5 lần (300 HP) và sát thương là 25.\n" +
-            "4. Đã gắn Collider dạng Capsule tối ưu hóa cho boss to cao.\n\n" +
+            "4. Đã gắn Collider dạng Capsule tối ưu hóa cho boss to cao.\n" +
+            "5. Đã tự động sinh vùng Trigger cắt cảnh đối thoại rạp phim (Boss_CutsceneTrigger) cách Boss 5m về bên trái!\n\n" +
             "Gợi ý: Hãy đặt Boss ở khu vực cuối của màn chơi để làm Boss cuối của game!", "Tuyệt vời");
     }
 

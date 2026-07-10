@@ -39,6 +39,10 @@ public class PlayerController : MonoBehaviour
     private bool isHurt; // Trạng thái đang bị thương (đơ người)
     private float lastHurtTime; // Thời điểm bị thương gần nhất (dùng làm bộ đếm an toàn)
 
+    // Khóa điều khiển khi chạy đối thoại/cutscene
+    [HideInInspector]
+    public bool inputLocked = false;
+
     // Biến phụ trợ Combo & Hỏa cầu
     private float lastAttackTime;
     private float lastFireballTime;
@@ -93,6 +97,21 @@ public class PlayerController : MonoBehaviour
 
         // 2. Xử lý các phím nóng debug/test (H: Sát thương, G: Hồi máu, B: Hồi mana)
         HandleDebugInputs();
+
+        // Nếu khóa điều khiển do đối thoại, triệt tiêu vận tốc và dừng di chuyển
+        if (inputLocked)
+        {
+            horizontalInput = 0f;
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+            if (anim != null)
+            {
+                anim.SetFloat("Speed", 0f);
+            }
+            return;
+        }
 
         // Nếu đã chết thì ngắt toàn bộ di chuyển/chiến đấu
         if (isDead) return;
@@ -151,6 +170,12 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (inputLocked)
+        {
+            if (rb != null) rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            return;
+        }
+
         if (isDead || isHurt) return; // Nếu đã chết hoặc bị thương thì không di chuyển vật lý
 
         // Di chuyển bằng vật lý

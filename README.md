@@ -61,6 +61,7 @@ Sau khi đánh bại Boss cuối **Tráng Sĩ Sơn Nam**, người chơi sẽ đ
 *   🎥 **Rung màn hình (Screen Shake)**: Mỗi khi đánh trúng kẻ địch hoặc bị tấn công, camera sẽ rung phản hồi chân thực.
 *   ⏳ **Khựng hình (Hit Stop)**: Dừng thời gian $0.06$ giây khi chém trúng quái vật để tạo độ đầm và độ nặng (impact) khi vung kiếm.
 *   🌦️ **Thời tiết Mưa rơi & Sấm sét động (Weather Effect)**: Hệ thống sinh hạt mưa chéo và giật chớp sét toàn màn hình hoàn toàn bằng code (procedural), kết hợp âm thanh sấm nổ trầm ấm (bằng cách làm chậm cao độ âm thanh sẵn có) tạo không khí u linh, hào hùng.
+*   🎬 **Cắt cảnh & Hội thoại Điện ảnh (Cinema Cutscene & Dialogue)**: Khi người chơi tiến gần Boss cuối, game sẽ tự động khóa di chuyển, đưa camera trượt mượt mà zoom cận cảnh, hiện 2 dải đen điện ảnh kiểu rạp phim và hiển thị bong bóng đối thoại dạng chạy chữ (typewriter effect) trên đầu nhân vật. Người chơi có thể click chuột trái hoặc nhấn Space để tua nhanh (Skip) hoặc chuyển câu thoại.
 
 ---
 
