@@ -124,6 +124,24 @@ public static class SetupUIEditor
         // Cấu hình ManaBar thành chuẩn Cao Cấp
         ConfigureBarUI(manaBarObj, false);
 
+        // Tạo/Cấu hình RageBar (Nộ)
+        Transform existingRageBar = canvasTransform.Find("RageBar");
+        if (existingRageBar != null)
+        {
+            Undo.DestroyObjectImmediate(existingRageBar.gameObject);
+        }
+
+        // Nhân bản HealthBar thành RageBar
+        GameObject rageBarObj = Object.Instantiate(healthBarTransform.gameObject, canvasTransform);
+        rageBarObj.name = "RageBar";
+        Undo.RegisterCreatedObjectUndo(rageBarObj, "Tạo RageBar");
+
+        int manaIndex = manaBarObj.transform.GetSiblingIndex();
+        rageBarObj.transform.SetSiblingIndex(manaIndex + 1);
+
+        // Cấu hình RageBar thành chuẩn Cao Cấp
+        ConfigureRageBarUI(rageBarObj);
+
         // Đánh dấu Scene thay đổi để lưu
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
         UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(player.scene);
@@ -134,7 +152,7 @@ public static class SetupUIEditor
             "Đã đồng bộ hóa thành công hệ thống chiến đấu:\n\n" +
             "1. Thêm thành phần PlayerStats & PlayerController vào Player.\n" +
             "2. Loại bỏ hoàn toàn các nút tròn màu trắng thô cứng (tránh lỗi Knob.psd).\n" +
-            "3. Thiết lập kích thước thanh Máu & Mana to lớn và sắc nét chuẩn Full HD (1920x1080)!\n\n" +
+            "3. Thiết lập kích thước thanh Máu, Mana và thanh NỘ (Hào Khí Đông A) to lớn và sắc nét chuẩn Full HD (1920x1080)!\n\n" +
             "Vui lòng nhấn Ctrl + S để lưu lại Scene.", "Tuyệt vời");
     }
 
@@ -306,6 +324,59 @@ public static class SetupUIEditor
             Transform fill = barObj.transform.Find("Fill Area/Fill");
             if (fill != null) mpUI.fillImage = fill.GetComponent<Image>();
         }
+    }
+
+    private static void ConfigureRageBarUI(GameObject barObj)
+    {
+        // Gỡ bỏ Handle Slide Area
+        Transform handleArea = barObj.transform.Find("Handle Slide Area");
+        if (handleArea != null)
+        {
+            Undo.DestroyObjectImmediate(handleArea.gameObject);
+        }
+
+        Slider slider = barObj.GetComponent<Slider>();
+        if (slider != null)
+        {
+            slider.handleRect = null;
+            slider.transition = Selectable.Transition.None;
+        }
+
+        Image[] images = barObj.GetComponentsInChildren<Image>(true);
+        foreach (var img in images)
+        {
+            if (img.sprite != null && (img.sprite.name == "Background" || img.sprite.name == "UISprite" || img.sprite.name == "Knob" || img.sprite.name.Contains("Knob") || img.sprite.name.Contains("Sprite")))
+            {
+                img.sprite = null;
+            }
+        }
+
+        RectTransform rect = barObj.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            Undo.RecordObject(rect, "Cập nhật RectTransform");
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(40f, -128f);
+            rect.sizeDelta = new Vector2(300f, 22f); // Thanh nộ nhỏ gọn hơn
+        }
+
+        HealthBarUI oldHP = barObj.GetComponent<HealthBarUI>();
+        if (oldHP != null) Object.DestroyImmediate(oldHP);
+        ManaBarUI oldMP = barObj.GetComponent<ManaBarUI>();
+        if (oldMP != null) Object.DestroyImmediate(oldMP);
+
+        RageBarUI rageUI = barObj.GetComponent<RageBarUI>();
+        if (rageUI == null)
+        {
+            rageUI = barObj.AddComponent<RageBarUI>();
+            Undo.RegisterCreatedObjectUndo(rageUI, "Gán RageBarUI");
+        }
+
+        rageUI.rageSlider = slider;
+        Transform fill = barObj.transform.Find("Fill Area/Fill");
+        if (fill != null) rageUI.fillImage = fill.GetComponent<Image>();
     }
 
     [MenuItem("Tools/Setup Enemies and Potions")]

@@ -121,6 +121,7 @@ public class PlayerController : MonoBehaviour
         HandleFireball(); // Xuất chiêu Hỏa Cầu trước để tránh xung đột nút chém
         HandleAttack();
         HandleJump();
+        HandleRageActivation(); // Kích hoạt Hào Khí Đông A (phím L)
 
         // 7. Cập nhật Animator
         UpdateAnimations();
@@ -302,6 +303,8 @@ public class PlayerController : MonoBehaviour
                     {
                         fireball = fireballObj.AddComponent<Fireball>();
                     }
+                    // Sát thương cầu lửa tỷ lệ theo sát thương thực tế của người chơi (1.5x)
+                    fireball.damage = Mathf.RoundToInt(stats.TotalDamage * 1.5f);
                     Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
                     fireball.Setup(dir);
                 }
@@ -522,6 +525,32 @@ public class PlayerController : MonoBehaviour
         isRunningAttack = false; // Reset trạng thái Run Attack
     }
 
+    private void HandleRageActivation()
+    {
+        // Nhấn phím L để kích hoạt Hào Khí Đông A khi đầy Nộ
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            PlayerStats stats = GetComponent<PlayerStats>();
+            if (stats != null && !stats.isRageMode && stats.currentRage >= stats.maxRage)
+            {
+                stats.StartRageMode();
+            }
+        }
+    }
+
+    public void TriggerHitStop(float duration)
+    {
+        StartCoroutine(HitStopRoutine(duration));
+    }
+
+    private System.Collections.IEnumerator HitStopRoutine(float duration)
+    {
+        float originalScale = Time.timeScale;
+        Time.timeScale = 0.05f; // Gần như đóng băng
+        yield return new WaitForSecondsRealtime(duration);
+        Time.timeScale = originalScale;
+    }
+
     private System.Collections.IEnumerator DealMeleeDamageDelay(float delay, int damage, bool isCombo2, bool runAttack)
     {
         yield return new WaitForSeconds(delay);
@@ -536,12 +565,34 @@ public class PlayerController : MonoBehaviour
 
         // Vẽ tia / quét hình tròn kiểm tra va chạm
         Collider2D[] targets = Physics2D.OverlapCircleAll(attackPos, 0.9f);
+        bool hitAnyEnemy = false;
         foreach (var target in targets)
         {
             if (target.gameObject != gameObject)
             {
                 // Nếu trúng đối thủ (quái vật hoặc vật phẩm phá hủy được), gửi thông điệp TakeDamage
                 target.SendMessage("TakeDamage", damage, SendMessageOptions.DontRequireReceiver);
+                if (target.CompareTag("Enemy"))
+                {
+                    hitAnyEnemy = true;
+                }
+            }
+        }
+
+        if (hitAnyEnemy)
+        {
+            // Cộng nộ cho người chơi khi đánh trúng kẻ địch
+            PlayerStats stats = GetComponent<PlayerStats>();
+            if (stats != null)
+            {
+                stats.AddRage(8f);
+            }
+
+            // Kích hoạt rung màn hình và khựng hình (Hit Stop & Screen Shake)
+            TriggerHitStop(0.06f);
+            if (CameraFollow.Instance != null)
+            {
+                CameraFollow.Instance.TriggerShake(0.12f, 0.15f);
             }
         }
     }
@@ -595,6 +646,7 @@ public class PlayerController : MonoBehaviour
                 stats.Heal(stats.maxHP);
                 stats.RestoreMana(stats.maxMP);
                 stats.bonusDamage += 500;
+                stats.currentRage = stats.maxRage; // Đầy Nộ tức thì để test phím L
                 
                 // Cấp 99 bình thuốc các loại
                 PotionSystem potionSys = GetComponent<PotionSystem>();

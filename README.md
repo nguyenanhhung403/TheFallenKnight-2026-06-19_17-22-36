@@ -26,6 +26,7 @@
 | **1** | Uống/Ăn **Bánh Mì** | Phục hồi **Máu** (HP) |
 | **2** | Uống **Trà Sữa** | Phục hồi **Năng Lượng** (MP) |
 | **3** | Uống **Cà Phê Sữa Đá** | Tăng **Tốc Độ** di chuyển & tấn công (Speed Buff) |
+| **L** | Kích hoạt **Hào Khí Đông A** (Rage Mode) | Kích hoạt khi đầy Nộ, nhân đôi sát thương & tăng 40% tốc chạy |
 | **ESC / P (khi chơi)** | Tạm dừng game (Pause Menu) | Tạm dừng hoặc thoát game |
 | **P** | **Bảng Hack/Cheat Tool** | Bật/tắt chế độ bất tử, tăng sát thương, hồi máu nhanh |
 
@@ -53,6 +54,12 @@ Sau khi đánh bại Boss cuối **Tráng Sĩ Sơn Nam**, người chơi sẽ đ
 *   🔴 **Lựa chọn Kế Thừa (Vòng Lặp Tối Tăm - Phải)**:
     *   *Kịch bản*: Nhân vật chính nhặt thanh kiếm vương đầy hắc khí lên, bị tà niệm nuốt chửng và trở thành hộ vệ mới của cõi u minh. Vòng lặp chiến tranh tiếp diễn.
     *   *Video clip*: `ending_legacy.mp4`.
+
+### 4. Hệ thống Nộ "Hào Khí Đông A" & Hiệu ứng Khựng/Rung (Combat Polish)
+Để tăng tính hấp dẫn và kỹ thuật cho đồ án, game được tích hợp các hiệu ứng chiến đấu cao cấp:
+*   🔥 **Nộ "Hào Khí Đông A" (Phím L)**: Khi tấn công quái vật hoặc nhận sát thương, người chơi sẽ tích lũy điểm Nộ. Khi thanh Nộ đầy (100/100), nhấn **L** để bùng nổ sức mạnh. Nhân vật sẽ có hào quang đỏ rực bám theo, sát thương nhân đôi ($2\times$) và tốc độ di chuyển tăng thêm $40\%$ trong 8 giây.
+*   🎥 **Rung màn hình (Screen Shake)**: Mỗi khi đánh trúng kẻ địch hoặc bị tấn công, camera sẽ rung phản hồi chân thực.
+*   ⏳ **Khựng hình (Hit Stop)**: Dừng thời gian $0.06$ giây khi chém trúng quái vật để tạo độ đầm và độ nặng (impact) khi vung kiếm.
 
 ---
 

@@ -22,8 +22,17 @@ public class PlayerStats : MonoBehaviour
     public float bonusSpeed = 0f;
 
     // Chỉ số thực tế
-    public int TotalDamage => baseDamage + bonusDamage;
-    public float TotalSpeed => baseSpeed + bonusSpeed;
+    public int TotalDamage => isRageMode ? (baseDamage + bonusDamage) * 2 : (baseDamage + bonusDamage);
+    public float TotalSpeed => isRageMode ? (baseSpeed + bonusSpeed) * 1.4f : (baseSpeed + bonusSpeed);
+
+    [Header("--- Chỉ số Nộ (Rage / Hào Khí Đông A) ---")]
+    public float currentRage = 0f;
+    public float maxRage = 100f;
+    public float rageDecayRate = 12.5f; // Hết nộ sau 8 giây (100/12.5 = 8s)
+    public bool isRageMode = false;
+
+    private float originalMoveSpeedRage;
+    private float originalAnimSpeedRage;
 
     void Awake()
     {
@@ -38,6 +47,87 @@ public class PlayerStats : MonoBehaviour
         {
             currentMP = Mathf.Min(currentMP + manaRegenRate * Time.deltaTime, maxMP);
         }
+
+        // Tự động tiêu hao nộ khi kích hoạt Hào Khí Đông A
+        if (isRageMode)
+        {
+            currentRage = Mathf.Max(currentRage - rageDecayRate * Time.deltaTime, 0f);
+            if (currentRage <= 0f)
+            {
+                EndRageMode();
+            }
+        }
+    }
+
+    public void AddRage(float amount)
+    {
+        if (isRageMode) return;
+        currentRage = Mathf.Min(currentRage + amount, maxRage);
+    }
+
+    public void StartRageMode()
+    {
+        if (isRageMode || currentRage < maxRage) return;
+
+        isRageMode = true;
+
+        PlayerController pc = GetComponent<PlayerController>();
+        if (pc != null)
+        {
+            originalMoveSpeedRage = pc.moveSpeed;
+            pc.moveSpeed = originalMoveSpeedRage * 1.4f; // Tăng 40% tốc chạy
+
+            Animator anim = pc.GetComponent<Animator>();
+            if (anim != null)
+            {
+                originalAnimSpeedRage = anim.speed;
+                anim.speed = originalAnimSpeedRage * 1.3f; // Tăng 30% tốc đánh/hoạt ảnh
+            }
+
+            // Kích hoạt hiệu ứng hào quang màu đỏ của Hào Khí Đông A
+            pc.SpawnAuraEffect(new Color(1f, 0.1f, 0.1f, 0.9f), 60);
+
+            // Đổi màu sprite nhân vật sang đỏ rực
+            SpriteRenderer sr = pc.GetComponent<SpriteRenderer>();
+            if (sr == null) sr = pc.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.color = new Color(1f, 0.5f, 0.5f, 1f);
+            }
+        }
+
+        AudioManager.Instance.PlaySFX(SoundEffect.BossDefeated);
+        Debug.Log("[RageMode] Đã kích hoạt HÀO KHÍ ĐÔNG A! Tăng sát thương và tốc độ chạy.");
+    }
+
+    public void EndRageMode()
+    {
+        if (!isRageMode) return;
+
+        isRageMode = false;
+
+        PlayerController pc = GetComponent<PlayerController>();
+        if (pc != null)
+        {
+            pc.moveSpeed = originalMoveSpeedRage > 0 ? originalMoveSpeedRage : 5f;
+
+            Animator anim = pc.GetComponent<Animator>();
+            if (anim != null)
+            {
+                anim.speed = originalAnimSpeedRage > 0 ? originalAnimSpeedRage : 1f;
+            }
+
+            SpriteRenderer sr = pc.GetComponent<SpriteRenderer>();
+            if (sr == null) sr = pc.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+            {
+                sr.color = Color.white;
+            }
+
+            pc.SpawnAuraEffect(new Color(0.5f, 0.5f, 0.5f, 0.5f), 20);
+        }
+
+        Debug.Log("[RageMode] Kết thúc HÀO KHÍ ĐÔNG A.");
     }
 
     public void TakeDamage(int amount)
@@ -54,9 +144,18 @@ public class PlayerStats : MonoBehaviour
         currentHP -= amount;
         currentHP = Mathf.Max(currentHP, 0);
 
+        // Cộng nộ khi nhận sát thương
+        AddRage(12f);
+
         if (currentHP > 0)
         {
             AudioManager.Instance.PlaySFX(SoundEffect.Hurt);
+        }
+
+        // Rung màn hình khi bị quái đánh
+        if (CameraFollow.Instance != null)
+        {
+            CameraFollow.Instance.TriggerShake(0.2f, 0.25f);
         }
 
         // Kích hoạt animation bị thương
@@ -64,6 +163,8 @@ public class PlayerStats : MonoBehaviour
 
         if (currentHP <= 0)
         {
+            // Nếu chết thì tắt chế độ nộ
+            if (isRageMode) EndRageMode();
             pc?.Die();
         }
     }
