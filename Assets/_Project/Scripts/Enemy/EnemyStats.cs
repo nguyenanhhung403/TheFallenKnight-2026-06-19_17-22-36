@@ -249,10 +249,50 @@ public class EnemyStats : MonoBehaviour
 
     private System.Collections.IEnumerator DelayBossDefeatedChoice()
     {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(1.2f);
 
-        // Phát âm thanh tiêu diệt Boss và dừng BGM
+        // Dừng nhạc nền để chuyển sang không khí u sầu đối thoại
         AudioManager.Instance.StopBGM();
+
+        // Kích hoạt cuộc đối thoại trăn trối khi Boss bại trận
+        PlayerController player = Object.FindAnyObjectByType<PlayerController>();
+        if (player != null && DialogueManager.Instance != null)
+        {
+            List<DialogueLine> deathLines = new List<DialogueLine>
+            {
+                new DialogueLine
+                {
+                    speakerName = "Tráng Sĩ Sơn Nam",
+                    speakerTransform = transform,
+                    text = "Hự... U minh hắc khí... cuối cùng cũng đã tan biến... Ta... ta được giải thoát rồi sao?"
+                },
+                new DialogueLine
+                {
+                    speakerName = "Tráng Sĩ",
+                    speakerTransform = player.transform,
+                    text = "Tiền bối! Tà niệm đã tiêu tan, thần hồn của ông đã trở lại thanh tịnh!"
+                },
+                new DialogueLine
+                {
+                    speakerName = "Tráng Sĩ Sơn Nam",
+                    speakerTransform = transform,
+                    text = "Cảm ơn tráng sĩ... Hào khí Đông A vạn thuở lưu truyền... Giờ đây cõi giang sơn này... ta xin phó thác lại cho ngươi..."
+                }
+            };
+
+            bool dialogueDone = false;
+            DialogueManager.Instance.StartDialogue(deathLines, () => {
+                dialogueDone = true;
+            });
+
+            // Chờ đối thoại kết thúc
+            while (!dialogueDone)
+            {
+                yield return null;
+            }
+        }
+
+        // Phát âm thanh tiêu diệt Boss (Chiến thắng)
         AudioManager.Instance.PlaySFX(SoundEffect.BossDefeated);
 
         GameObject bdPanel = null;
