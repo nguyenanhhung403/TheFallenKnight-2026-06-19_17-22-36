@@ -135,7 +135,7 @@ public class DialogueManager : MonoBehaviour
         bubbleBG = bgObj.AddComponent<Image>();
         bubbleBG.color = new Color(0.05f, 0.05f, 0.05f, 0.85f); // Đen mờ tinh tế
         bubbleBG.sprite = CreateRoundedRectSprite();
-        bubbleBG.type = Image.Type.Sliced; // Sử dụng chế độ Sliced để giữ nguyên bo tròn 4 góc không bị kéo giãn méo mó
+        bubbleBG.type = Image.Type.Simple; // Sử dụng Simple để kéo giãn tấm ảnh 256x128 chuẩn tỷ lệ
 
         RectTransform rectBG = bubbleBG.rectTransform;
         rectBG.anchorMin = Vector2.zero;
@@ -413,36 +413,40 @@ public class DialogueManager : MonoBehaviour
 
     private Sprite CreateRoundedRectSprite()
     {
-        int size = 16;
-        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        tex.filterMode = FilterMode.Point;
-        Color32[] pixels = new Color32[size * size];
+        int w = 256;
+        int h = 128;
+        Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Bilinear; // Khử răng cưa mịn góc bo tròn
+        Color32[] pixels = new Color32[w * h];
 
-        for (int y = 0; y < size; y++)
+        float radius = 16f; // Bán kính bo góc 16 pixel
+
+        for (int y = 0; y < h; y++)
         {
-            for (int x = 0; x < size; x++)
+            for (int x = 0; x < w; x++)
             {
-                // Bo tròn 4 góc đơn giản bằng khoảng cách
-                float dx = Mathf.Min(x, size - 1 - x);
-                float dy = Mathf.Min(y, size - 1 - y);
+                float dx = x < radius ? radius - x : (x > w - 1 - radius ? x - (w - 1 - radius) : 0f);
+                float dy = y < radius ? radius - y : (y > h - 1 - radius ? y - (h - 1 - radius) : 0f);
                 
                 Color32 c = Color.white;
-                // Nếu ở góc bo tròn ngoài
-                if (dx < 3 && dy < 3)
+                if (dx > 0f && dy > 0f)
                 {
-                    float dist = Mathf.Sqrt((3 - dx) * (3 - dx) + (3 - dy) * (3 - dy));
-                    if (dist > 3f)
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (dist > radius)
                     {
                         c = Color.clear;
                     }
+                    else
+                    {
+                        float alpha = Mathf.Clamp01(radius - dist + 0.5f);
+                        c = new Color32(255, 255, 255, (byte)(255 * alpha));
+                    }
                 }
-                pixels[y * size + x] = c;
+                pixels[y * w + x] = c;
             }
         }
         tex.SetPixels32(pixels);
         tex.Apply();
-        
-        // Cấu hình border 4 pixel xung quanh để sử dụng chế độ Sliced trong UI (9-slicing)
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16f, 0, SpriteMeshType.FullRect, new Vector4(4f, 4f, 4f, 4f));
+        return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
     }
 }
