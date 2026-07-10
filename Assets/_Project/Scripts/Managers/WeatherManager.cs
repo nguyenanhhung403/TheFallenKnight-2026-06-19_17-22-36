@@ -19,12 +19,20 @@ public class WeatherManager : MonoBehaviour
     public float minLightningInterval = 12f;
     public float maxLightningInterval = 25f;
 
+    [Header("--- Cấu hình Lá Rụng ---")]
+    public bool enableLeaves = true;
+    public int leafCount = 18;
+    public float leafSpeedX = -4.5f;
+    public float leafSpeedY = -2f;
+
     // References
     private Camera cam;
     private GameObject[] rainPool;
     private Image flashImage;
     private float lightningTimer;
     private Sprite rainSprite;
+    private GameObject[] leafPool;
+    private Sprite leafSprite;
 
     void Awake()
     {
@@ -49,6 +57,13 @@ public class WeatherManager : MonoBehaviour
 
         // 3. Khởi tạo Canvas chớp sét ở runtime
         InitializeFlashUI();
+
+        // 4. Khởi tạo Pool lá rụng
+        if (enableLeaves)
+        {
+            leafSprite = CreateLeafSprite();
+            InitializeLeafPool();
+        }
 
         // Đặt bộ đếm thời gian sấm sét đầu tiên
         lightningTimer = Random.Range(5f, 10f);
@@ -240,5 +255,129 @@ public class WeatherManager : MonoBehaviour
         tex.SetPixels(pixels);
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 16f);
+    }
+
+    private void InitializeLeafPool()
+    {
+        leafPool = new GameObject[leafCount];
+        GameObject leafContainer = new GameObject("LeafContainer");
+        leafContainer.transform.SetParent(transform);
+
+        for (int i = 0; i < leafCount; i++)
+        {
+            GameObject leaf = new GameObject("Leaf_" + i);
+            leaf.transform.SetParent(leafContainer.transform);
+
+            SpriteRenderer sr = leaf.AddComponent<SpriteRenderer>();
+            sr.sprite = leafSprite;
+            sr.sortingOrder = 18; // Render sau mưa nhưng trước cảnh vật/nhân vật
+
+            leaf.transform.localScale = new Vector3(Random.Range(0.6f, 1.2f), Random.Range(0.6f, 1.2f), 1f);
+            
+            WindyLeaf script = leaf.AddComponent<WindyLeaf>();
+            script.Setup(this, leafSpeedX, leafSpeedY);
+
+            leafPool[i] = leaf;
+        }
+    }
+
+    private Sprite CreateLeafSprite()
+    {
+        int size = 8;
+        Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        Color[] pixels = new Color[size * size];
+        
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float dx = x - 3.5f;
+                float dy = y - 3.5f;
+                if (Mathf.Abs(dx + dy) <= 3.5f && Mathf.Abs(dx - dy) <= 2.2f)
+                {
+                    pixels[y * size + x] = new Color(0.85f, Random.Range(0.35f, 0.65f), 0.15f, 0.7f);
+                }
+                else
+                {
+                    pixels[y * size + x] = Color.clear;
+                }
+            }
+        }
+        tex.SetPixels(pixels);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16f);
+    }
+}
+
+/// <summary>
+/// Thành phần điều khiển chuyển động của lá rụng đung đưa lượn sóng theo gió
+/// </summary>
+public class WindyLeaf : MonoBehaviour
+{
+    private WeatherManager manager;
+    private float speedX;
+    private float speedY;
+    private float sinSpeed;
+    private float sinAmplitude;
+    private float timeOffset;
+
+    public void Setup(WeatherManager wm, float sx, float sy)
+    {
+        manager = wm;
+        speedX = sx * Random.Range(0.8f, 1.2f);
+        speedY = sy * Random.Range(0.8f, 1.2f);
+        sinSpeed = Random.Range(2f, 5f);
+        sinAmplitude = Random.Range(0.8f, 2.2f);
+        timeOffset = Random.Range(0f, 10f);
+
+        ResetPosition(true);
+    }
+
+    void Update()
+    {
+        if (Camera.main == null) return;
+        Camera cam = Camera.main;
+
+        float horizontalMove = speedX * Time.deltaTime;
+        float sinOffset = Mathf.Sin(Time.time * sinSpeed + timeOffset) * sinAmplitude * Time.deltaTime;
+        float verticalMove = (speedY + sinOffset) * Time.deltaTime;
+
+        transform.position += new Vector3(horizontalMove, verticalMove, 0f);
+
+        // Xoay nhẹ lá cây khi rơi
+        transform.Rotate(0f, 0f, 45f * Time.deltaTime);
+
+        float camHeight = cam.orthographicSize * 2f;
+        float camWidth = camHeight * cam.aspect;
+        Vector3 camPos = cam.transform.position;
+
+        float bottomLimit = camPos.y - (camHeight / 2f) - 2f;
+        float leftLimit = camPos.x - (camWidth / 2f) - 3f;
+
+        if (transform.position.y < bottomLimit || transform.position.x < leftLimit)
+        {
+            ResetPosition(false);
+        }
+    }
+
+    public void ResetPosition(bool fullScreenInit)
+    {
+        if (Camera.main == null) return;
+        Camera cam = Camera.main;
+
+        float camHeight = cam.orthographicSize * 2f;
+        float camWidth = camHeight * cam.aspect;
+        Vector3 camPos = cam.transform.position;
+
+        float topY = camPos.y + (camHeight / 2f) + 2f;
+        float bottomY = camPos.y - (camHeight / 2f) - 2f;
+        float leftX = camPos.x - (camWidth / 2f) - 3f;
+        float rightX = camPos.x + (camWidth / 2f) + 3f;
+
+        float spawnX = fullScreenInit ? Random.Range(leftX, rightX) : rightX + Random.Range(0f, 3f);
+        float spawnY = Random.Range(bottomY + 1f, topY + 2f);
+
+        transform.position = new Vector3(spawnX, spawnY, 0f);
     }
 }
