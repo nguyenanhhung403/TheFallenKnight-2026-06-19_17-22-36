@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// Quản lý chỉ số, sát thương và cái chết của Quái vật.
