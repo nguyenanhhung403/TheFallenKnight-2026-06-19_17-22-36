@@ -84,6 +84,38 @@ public class PlayerController : MonoBehaviour
         {
             col.sharedMaterial = noFrictionMaterial;
         }
+
+        // Kích hoạt hội thoại dẫn truyện khi bắt đầu game sau 0.4 giây
+        StartCoroutine(TriggerOpeningDialogueAfterDelay());
+    }
+
+    private System.Collections.IEnumerator TriggerOpeningDialogueAfterDelay()
+    {
+        yield return new WaitForSeconds(0.4f);
+
+        if (DialogueManager.Instance == null)
+        {
+            GameObject dmObj = new GameObject("DialogueManager");
+            dmObj.AddComponent<DialogueManager>();
+        }
+
+        List<DialogueLine> openingLines = new List<DialogueLine>
+        {
+            new DialogueLine
+            {
+                speakerName = "Tráng Sĩ",
+                speakerTransform = transform,
+                text = "Nơi này... chính là Cõi U Minh sao? Hắc khí u ám bao phủ khắp lối, không khí thật lạnh lẽo thấu xương..."
+            },
+            new DialogueLine
+            {
+                speakerName = "Tráng Sĩ",
+                speakerTransform = transform,
+                text = "Ta phải mau chóng tìm thấy tung tích của Tráng Sĩ Sơn Nam, và dùng hào khí kiếm pháp này đánh đuổi bóng tối!"
+            }
+        };
+
+        DialogueManager.Instance.StartDialogue(openingLines, null);
     }
 
     void Update()
