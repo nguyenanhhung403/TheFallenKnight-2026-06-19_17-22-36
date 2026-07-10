@@ -121,21 +121,29 @@ public class DialogueManager : MonoBehaviour
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.sortingOrder = 25; // Render phía trên Sprite nhân vật
 
+        // Đặt kích thước và tỉ lệ của Canvas thế giới
+        RectTransform canvasRect = bubbleCanvasObj.GetComponent<RectTransform>();
+        canvasRect.sizeDelta = new Vector2(300f, 115f); // Kích thước của bong bóng hội thoại
+        canvasRect.localScale = new Vector3(0.015f, 0.015f, 1f); // Tỉ lệ quy đổi ra World Space
+
         CanvasScaler scaler = bubbleCanvasObj.AddComponent<CanvasScaler>();
         scaler.dynamicPixelsPerUnit = 20;
 
-        // Panel nền bong bóng hội thoại
+        // Panel nền bong bóng hội thoại (Stretches to fill canvas)
         GameObject bgObj = new GameObject("BubbleBG");
         bgObj.transform.SetParent(bubbleCanvasObj.transform, false);
         bubbleBG = bgObj.AddComponent<Image>();
         bubbleBG.color = new Color(0.05f, 0.05f, 0.05f, 0.85f); // Đen mờ tinh tế
-
-        // Tạo Sprite bo góc đơn giản cho bong bóng hội thoại
         bubbleBG.sprite = CreateRoundedRectSprite();
+        bubbleBG.type = Image.Type.Sliced; // Sử dụng chế độ Sliced để giữ nguyên bo tròn 4 góc không bị kéo giãn méo mó
 
         RectTransform rectBG = bubbleBG.rectTransform;
-        rectBG.sizeDelta = new Vector2(300f, 110f); // Tăng kích thước khung để chứa được nhiều chữ hơn
-        rectBG.localScale = new Vector3(0.015f, 0.015f, 1f); // Quy đổi World Space
+        rectBG.anchorMin = Vector2.zero;
+        rectBG.anchorMax = Vector2.one;
+        rectBG.pivot = new Vector2(0.5f, 0.5f);
+        rectBG.offsetMin = Vector2.zero;
+        rectBG.offsetMax = Vector2.zero;
+        rectBG.localScale = Vector3.one;
 
         // Tên người nói
         GameObject nameObj = new GameObject("SpeakerNameText");
@@ -152,8 +160,9 @@ public class DialogueManager : MonoBehaviour
         rectName.anchorMin = Vector2.zero;
         rectName.anchorMax = Vector2.one;
         rectName.pivot = new Vector2(0.5f, 0.5f);
-        rectName.offsetMin = new Vector2(12f, 78f);
-        rectName.offsetMax = new Vector2(-12f, -8f);
+        rectName.offsetMin = new Vector2(15f, 82f);
+        rectName.offsetMax = new Vector2(-15f, -8f);
+        rectName.localScale = Vector3.one;
 
         // Nội dung thoại
         GameObject textObj = new GameObject("DialogueText");
@@ -170,8 +179,9 @@ public class DialogueManager : MonoBehaviour
         rectText.anchorMin = Vector2.zero;
         rectText.anchorMax = Vector2.one;
         rectText.pivot = new Vector2(0.5f, 0.5f);
-        rectText.offsetMin = new Vector2(12f, 10f);
-        rectText.offsetMax = new Vector2(-12f, -35f);
+        rectText.offsetMin = new Vector2(15f, 10f);
+        rectText.offsetMax = new Vector2(-15f, -38f);
+        rectText.localScale = Vector3.one;
 
         bubbleCanvasObj.SetActive(false);
     }
@@ -431,6 +441,8 @@ public class DialogueManager : MonoBehaviour
         }
         tex.SetPixels32(pixels);
         tex.Apply();
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
+        
+        // Cấu hình border 4 pixel xung quanh để sử dụng chế độ Sliced trong UI (9-slicing)
+        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 16f, 0, SpriteMeshType.FullRect, new Vector4(4f, 4f, 4f, 4f));
     }
 }
