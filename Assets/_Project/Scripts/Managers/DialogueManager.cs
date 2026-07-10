@@ -66,11 +66,8 @@ public class DialogueManager : MonoBehaviour
         {
             dialogueFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         }
-    }
 
-    void Start()
-    {
-        // Khởi tạo trước các thành phần UI ẩn
+        // Khởi tạo ngay lập tức trong Awake đề phòng gọi StartDialogue trong cùng frame khi AddComponent
         InitializeCinemaUI();
         InitializeBubbleUI();
     }
@@ -178,6 +175,10 @@ public class DialogueManager : MonoBehaviour
     public void StartDialogue(List<DialogueLine> lines, System.Action onComplete)
     {
         if (isDialogueActive) return;
+
+        // Đảm bảo UI đã được khởi tạo hoàn toàn
+        if (cinemaCanvasObj == null) InitializeCinemaUI();
+        if (bubbleCanvasObj == null) InitializeBubbleUI();
 
         isDialogueActive = true;
         dialogueLines = lines;
