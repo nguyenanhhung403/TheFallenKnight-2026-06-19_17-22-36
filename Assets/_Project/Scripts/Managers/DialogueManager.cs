@@ -123,29 +123,29 @@ public class DialogueManager : MonoBehaviour
 
         // Đặt kích thước và tỉ lệ của Canvas thế giới
         RectTransform canvasRect = bubbleCanvasObj.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(300f, 115f); // Kích thước của bong bóng hội thoại
+        canvasRect.sizeDelta = new Vector2(300f, 140f); // Tăng chiều cao lên 140 để thoải mái chứa 5 dòng chữ thoại
         canvasRect.localScale = new Vector3(0.015f, 0.015f, 1f); // Tỉ lệ quy đổi ra World Space
 
         CanvasScaler scaler = bubbleCanvasObj.AddComponent<CanvasScaler>();
         scaler.dynamicPixelsPerUnit = 20;
 
-        // Panel nền bong bóng hội thoại (Stretches to fill canvas)
+        // Panel nền bong bóng hội thoại (Kích thước 300x140 cố định)
         GameObject bgObj = new GameObject("BubbleBG");
         bgObj.transform.SetParent(bubbleCanvasObj.transform, false);
         bubbleBG = bgObj.AddComponent<Image>();
         bubbleBG.color = new Color(0.05f, 0.05f, 0.05f, 0.85f); // Đen mờ tinh tế
         bubbleBG.sprite = CreateRoundedRectSprite();
-        bubbleBG.type = Image.Type.Simple; // Sử dụng Simple để kéo giãn tấm ảnh 256x128 chuẩn tỷ lệ
+        bubbleBG.type = Image.Type.Simple; // Kéo giãn ảnh 256x128 theo tỉ lệ
 
         RectTransform rectBG = bubbleBG.rectTransform;
-        rectBG.anchorMin = Vector2.zero;
-        rectBG.anchorMax = Vector2.one;
+        rectBG.anchorMin = new Vector2(0.5f, 0.5f);
+        rectBG.anchorMax = new Vector2(0.5f, 0.5f);
         rectBG.pivot = new Vector2(0.5f, 0.5f);
-        rectBG.offsetMin = Vector2.zero;
-        rectBG.offsetMax = Vector2.zero;
+        rectBG.anchoredPosition = Vector2.zero;
+        rectBG.sizeDelta = new Vector2(300f, 140f); // Định kích thước khung đen cố định
         rectBG.localScale = Vector3.one;
 
-        // Tên người nói
+        // Tên người nói (Kích thước 270x25 cố định, neo trên)
         GameObject nameObj = new GameObject("SpeakerNameText");
         nameObj.transform.SetParent(bgObj.transform, false);
         speakerNameText = nameObj.AddComponent<Text>();
@@ -157,14 +157,14 @@ public class DialogueManager : MonoBehaviour
         speakerNameText.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rectName = speakerNameText.rectTransform;
-        rectName.anchorMin = Vector2.zero;
-        rectName.anchorMax = Vector2.one;
-        rectName.pivot = new Vector2(0.5f, 0.5f);
-        rectName.offsetMin = new Vector2(15f, 82f);
-        rectName.offsetMax = new Vector2(-15f, -8f);
+        rectName.anchorMin = new Vector2(0.5f, 1f); // Neo ở giữa-trên
+        rectName.anchorMax = new Vector2(0.5f, 1f);
+        rectName.pivot = new Vector2(0.5f, 1f);
+        rectName.anchoredPosition = new Vector2(0f, -12f); // Cách lề trên 12px
+        rectName.sizeDelta = new Vector2(270f, 25f); // Chiều ngang 270 nhỏ hơn khung đen 300
         rectName.localScale = Vector3.one;
 
-        // Nội dung thoại
+        // Nội dung thoại (Kích thước 270x90 cố định, neo dưới tên)
         GameObject textObj = new GameObject("DialogueText");
         textObj.transform.SetParent(bgObj.transform, false);
         bubbleText = textObj.AddComponent<Text>();
@@ -176,11 +176,11 @@ public class DialogueManager : MonoBehaviour
         bubbleText.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rectText = bubbleText.rectTransform;
-        rectText.anchorMin = Vector2.zero;
-        rectText.anchorMax = Vector2.one;
-        rectText.pivot = new Vector2(0.5f, 0.5f);
-        rectText.offsetMin = new Vector2(15f, 10f);
-        rectText.offsetMax = new Vector2(-15f, -38f);
+        rectText.anchorMin = new Vector2(0.5f, 1f); // Neo ở giữa-trên
+        rectText.anchorMax = new Vector2(0.5f, 1f);
+        rectText.pivot = new Vector2(0.5f, 1f);
+        rectText.anchoredPosition = new Vector2(0f, -42f); // Đặt phía dưới SpeakerNameText
+        rectText.sizeDelta = new Vector2(270f, 90f); // Chiều ngang 270 (nhỏ hơn khung đen 300) bảo đảm không bao giờ tràn
         rectText.localScale = Vector3.one;
 
         bubbleCanvasObj.SetActive(false);
