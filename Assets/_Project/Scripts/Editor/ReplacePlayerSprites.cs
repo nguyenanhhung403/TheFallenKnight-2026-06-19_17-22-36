@@ -28,57 +28,68 @@ public class ReplacePlayerSprites : EditorWindow
             return;
         }
 
-        // 3. Tự động chỉnh sửa PPU, FilterMode và Pivot (Bottom-Center) trong file .meta trực tiếp để tránh lỗi Unity API khác biệt
-        ConfigureTexturesDirectly(assetFolderPath, 128);
+        // 3. Tự động chỉnh sửa PPU và Pivot (Bottom-Center) trong file .meta trực tiếp với các PPU riêng biệt để đồng bộ tỉ lệ
+        ConfigureTexturesDirectly(assetFolderPath);
 
-        // 4. Thực hiện ánh xạ các hoạt ảnh
+        // 4. Đảm bảo cấu trúc Trigger Attack3 và State Player_Attack3 tồn tại trong Animator Controller
+        EnsureAttack3InAnimator();
+
+        // 5. Thực hiện ánh xạ các hoạt ảnh
         // Cấu hình: Tên animation clip ➔ Tên file png trong Asset_Player ➔ Frame Rate
         MapAnimation(animFolderPath + "/Player_Idle.anim", assetFolderPath + "/idle.png", 8f);
         MapAnimation(animFolderPath + "/Player_Run.anim", assetFolderPath + "/run.png", 12f);
         MapAnimation(animFolderPath + "/Player_Jump.anim", assetFolderPath + "/jump.png", 10f);
         MapAnimation(animFolderPath + "/Player_Hurt.anim", assetFolderPath + "/hurt.png", 8f);
         MapAnimation(animFolderPath + "/Player_Dead.anim", assetFolderPath + "/dead.png", 8f);
-        MapAnimation(animFolderPath + "/Player_Protect.anim", assetFolderPath + "/protect.png", 8f);
         
-        // Đòn đánh 1 & 2
+        // Đổi từ protect.png sang defend.png (kích thước chuẩn) để đỡ đòn không bị phình to
+        MapAnimation(animFolderPath + "/Player_Protect.anim", assetFolderPath + "/defend.png", 8f);
+        
+        // Các đòn đánh
         MapAnimation(animFolderPath + "/Player_Attack1.anim", assetFolderPath + "/Attack1.png", 12f);
         MapAnimation(animFolderPath + "/Player_Attack2.anim", assetFolderPath + "/attack2.png", 12f);
-
-        // Đòn đánh 3 & RunAttack (Do thiếu Attack3.png, dùng tạm Attack1.png làm placeholder)
-        string attack3Path = assetFolderPath + "/Attack3.png";
-        if (File.Exists(attack3Path))
-        {
-            MapAnimation(animFolderPath + "/Player_Attack3.anim", attack3Path, 12f);
-        }
-        else
-        {
-            Debug.LogWarning("[ReplacePlayerSprites] Thiếu Attack3.png, dùng tạm Attack1.png làm đòn đánh 3.");
-            MapAnimation(animFolderPath + "/Player_Attack3.anim", assetFolderPath + "/Attack1.png", 12f);
-        }
+        MapAnimation(animFolderPath + "/Player_Attack3.anim", assetFolderPath + "/Attack3.png", 12f);
         MapAnimation(animFolderPath + "/Player_RunAttack.anim", assetFolderPath + "/Attack1.png", 12f);
 
-        // 5. Cập nhật Sprite mặc định của Player trong Scene để hiển thị đúng nhân vật mới ngay trong Editor
+        // 6. Cập nhật Sprite mặc định của Player trong Scene để hiển thị đúng nhân vật mới ngay trong Editor
         UpdatePlayerDefaultSprite(assetFolderPath + "/idle.png");
 
-        // 6. Tự động điều chỉnh kích thước Collider của Player tương ứng với chiều cao 2 ô grid (2.0f units)
+        // 7. Tự động điều chỉnh kích thước Collider của Player tương ứng với chiều cao 2 ô grid (2.0f units)
         AdjustPlayerCollider();
 
-        // 7. Lưu lại thay đổi
+        // 8. Lưu lại thay đổi
         AssetDatabase.SaveAssets();
         UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
         AssetDatabase.Refresh();
 
-        if (showDialog) EditorUtility.DisplayDialog("Thành công", "Đã cập nhật toàn bộ hoạt ảnh của Player và điều chỉnh tỉ lệ thành công (cao 2 ô Grid)!", "OK");
+        if (showDialog) EditorUtility.DisplayDialog("Thành công", "Đã cập nhật toàn bộ hoạt ảnh của Player, đồng bộ kích thước và sửa lỗi đỡ đòn thành công!", "OK");
         Debug.Log("[ReplacePlayerSprites] Hoàn thành thay thế Sprite của Player!");
     }
 
-    private static void ConfigureTexturesDirectly(string folderPath, int targetPPU)
+    private static void ConfigureTexturesDirectly(string folderPath)
     {
         string[] metaFiles = Directory.GetFiles(folderPath, "*.png.meta");
         bool changedAny = false;
 
         foreach (string metaFile in metaFiles)
         {
+            string fileName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(metaFile)).ToLower();
+            
+            // Đồng bộ PPU tùy chỉnh để tất cả hành động cao tương đương nhau (khoảng 2.0 Unity units)
+            int targetPPU = 128; // Mặc định cho idle, walk, defend, hurt, dead
+            if (fileName == "run" || fileName == "jump")
+            {
+                targetPPU = 90; // Phình to chạy/nhảy vì sprite vẽ ngắn hơn
+            }
+            else if (fileName == "attack1")
+            {
+                targetPPU = 115;
+            }
+            else if (fileName == "attack3")
+            {
+                targetPPU = 65; // Phình to Attack3 vì sprite vẽ siêu ngắn (130px)
+            }
+
             string[] lines = File.ReadAllLines(metaFile);
             bool inSpriteSheet = false;
             bool changed = false;
@@ -156,6 +167,76 @@ public class ReplacePlayerSprites : EditorWindow
         if (changedAny)
         {
             AssetDatabase.Refresh();
+        }
+    }
+
+    private static void EnsureAttack3InAnimator()
+    {
+        string controllerPath = "Assets/_Project/Animations/PlayerAnimController.controller";
+        var controller = AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(controllerPath);
+        if (controller == null)
+        {
+            Debug.LogError($"[ReplacePlayerSprites] Không tìm thấy AnimatorController tại: {controllerPath}");
+            return;
+        }
+
+        // 1. Thêm Parameter Trigger "Attack3" nếu chưa có
+        bool hasParam = false;
+        foreach (var p in controller.parameters)
+        {
+            if (p.name == "Attack3")
+            {
+                hasParam = true;
+                break;
+            }
+        }
+        if (!hasParam)
+        {
+            controller.AddParameter("Attack3", AnimatorControllerParameterType.Trigger);
+            Debug.Log("[ReplacePlayerSprites] Đã thêm Parameter Trigger 'Attack3' vào Animator Controller.");
+        }
+
+        // 2. Tìm hoặc tạo State "Player_Attack3" trong layer đầu tiên
+        var stateMachine = controller.layers[0].stateMachine;
+        var states = stateMachine.states;
+        UnityEditor.Animations.AnimatorState attack3State = null;
+        
+        foreach (var s in states)
+        {
+            if (s.state.name == "Player_Attack3")
+            {
+                attack3State = s.state;
+                break;
+            }
+        }
+
+        AnimationClip attack3Clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/_Project/Animations/Player_Attack3.anim");
+
+        if (attack3State == null)
+        {
+            attack3State = stateMachine.AddState("Player_Attack3");
+            attack3State.motion = attack3Clip;
+            attack3State.speed = 1f;
+            Debug.Log("[ReplacePlayerSprites] Đã tạo State 'Player_Attack3' thành công.");
+
+            // Thêm transition từ Any State -> Player_Attack3
+            var anyTransition = stateMachine.AddAnyStateTransition(attack3State);
+            anyTransition.AddCondition(UnityEditor.Animations.AnimatorConditionMode.If, 0f, "Attack3");
+            anyTransition.duration = 0f;
+            anyTransition.hasExitTime = false;
+            Debug.Log("[ReplacePlayerSprites] Đã thêm transition từ Any State tới Player_Attack3.");
+
+            // Thêm transition từ Player_Attack3 -> Default State (Idle)
+            var exitTransition = attack3State.AddTransition(stateMachine.defaultState);
+            exitTransition.hasExitTime = true;
+            exitTransition.exitTime = 1f;
+            exitTransition.duration = 0.1f;
+            Debug.Log("[ReplacePlayerSprites] Đã thêm transition trả về Default State từ Player_Attack3.");
+        }
+        else
+        {
+            // Cập nhật motion clip nếu cần
+            attack3State.motion = attack3Clip;
         }
     }
 
