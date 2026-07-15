@@ -66,6 +66,12 @@ public class PlayerController : MonoBehaviour
         {
             firePoint.localPosition = new Vector3(firePoint.localPosition.x, 1.1f, firePoint.localPosition.z);
         }
+
+        // Tự động căn chỉnh vị trí local của groundCheck về đúng bàn chân (y = 0f) của Player mới
+        if (groundCheck != null && groundCheck.parent == transform)
+        {
+            groundCheck.localPosition = new Vector3(0f, 0f, 0f);
+        }
         
         // Tìm SpriteRenderer (hỗ trợ cả trường hợp nằm ở GameObject con)
         spriteRenderer = GetComponent<SpriteRenderer>();
