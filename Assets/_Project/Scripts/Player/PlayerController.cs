@@ -165,6 +165,20 @@ public class PlayerController : MonoBehaviour
         if (groundCheck != null)
         {
             isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+
+            // Fallback an toàn: Nếu không chạm lớp groundLayer nhưng đang đứng trên bất cứ vật thể cứng nào khác (trừ chính Player và trigger)
+            if (!isGrounded)
+            {
+                Collider2D[] cols = Physics2D.OverlapCircleAll(groundCheck.position, groundCheckRadius);
+                foreach (var col in cols)
+                {
+                    if (col.gameObject != gameObject && !col.isTrigger && !col.CompareTag("Player"))
+                    {
+                        isGrounded = true;
+                        break;
+                    }
+                }
+            }
         }
         else
         {
