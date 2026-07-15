@@ -60,6 +60,12 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+
+        // Tự động điều chỉnh vị trí local của firePoint lên tầm tay/ngực (y = 1.1f) nếu là con của Player
+        if (firePoint != null && firePoint.parent == transform)
+        {
+            firePoint.localPosition = new Vector3(firePoint.localPosition.x, 1.1f, firePoint.localPosition.z);
+        }
         
         // Tìm SpriteRenderer (hỗ trợ cả trường hợp nằm ở GameObject con)
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -357,13 +363,13 @@ public class PlayerController : MonoBehaviour
                 lastAttackTime = Time.time;
                 isAttacking = true;
 
-                // Kích hoạt animation xuất chiêu (Sử dụng trigger Attack2 để vung kiếm chém lửa ra)
-                anim.ResetTrigger("Attack2");
-                anim.SetTrigger("Attack2");
+                // Kích hoạt animation xuất chiêu (Sử dụng trigger Attack3 để vung kiếm chém lửa ra)
+                anim.ResetTrigger("Attack3");
+                anim.SetTrigger("Attack3");
                 AudioManager.Instance.PlaySFX(SoundEffect.Attack);
 
-                // Tính toán điểm xuất phát của cầu lửa
-                Vector3 spawnOffset = new Vector3(isFacingRight ? 0.8f : -0.8f, 0.2f, 0f);
+                // Tính toán điểm xuất phát của cầu lửa (cao 1.1f mét ngang ngực nhân vật mới)
+                Vector3 spawnOffset = new Vector3(isFacingRight ? 0.8f : -0.8f, 1.1f, 0f);
                 Vector2 spawnPos = firePoint != null ? (Vector2)firePoint.position : (Vector2)(transform.position + spawnOffset);
 
                 GameObject fireballObj = null;
