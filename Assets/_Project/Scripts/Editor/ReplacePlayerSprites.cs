@@ -259,17 +259,37 @@ public class ReplacePlayerSprites : EditorWindow
 
         // Bảo toàn và căn chỉnh thời gian cho Animation Events (như FinishAttack, FinishHurt) về cuối clip mới
         AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
-        if (events != null && events.Length > 0)
+        float newEndTime = (newSprites.Length - 1) * frameInterval;
+        bool hasResetEvent = false;
+        string targetEventName = clip.name.Contains("Hurt") ? "FinishHurt" : "FinishAttack";
+        bool shouldHaveEvent = clip.name.Contains("Attack") || clip.name.Contains("Hurt");
+
+        if (shouldHaveEvent)
         {
-            float newEndTime = (newSprites.Length - 1) * frameInterval;
-            foreach (var ev in events)
+            if (events != null && events.Length > 0)
             {
-                if (ev.functionName == "FinishAttack" || ev.functionName == "FinishHurt")
+                foreach (var ev in events)
                 {
-                    ev.time = newEndTime;
-                    Debug.Log($"[ReplacePlayerSprites] Đã di chuyển sự kiện {ev.functionName} của {clip.name} về thời gian {newEndTime}s.");
+                    if (ev.functionName == targetEventName)
+                    {
+                        ev.time = newEndTime;
+                        hasResetEvent = true;
+                    }
                 }
             }
+
+            if (!hasResetEvent)
+            {
+                AnimationEvent newEv = new AnimationEvent();
+                newEv.time = newEndTime;
+                newEv.functionName = targetEventName;
+
+                System.Collections.Generic.List<AnimationEvent> eventList = (events != null) ? events.ToList() : new System.Collections.Generic.List<AnimationEvent>();
+                eventList.Add(newEv);
+                events = eventList.ToArray();
+                Debug.Log($"[ReplacePlayerSprites] Đã thêm mới sự kiện {targetEventName} cho {clip.name} tại {newEndTime}s.");
+            }
+
             AnimationUtility.SetAnimationEvents(clip, events);
         }
 

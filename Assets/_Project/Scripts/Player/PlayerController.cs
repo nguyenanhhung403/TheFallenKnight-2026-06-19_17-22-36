@@ -368,36 +368,48 @@ public class PlayerController : MonoBehaviour
                 anim.SetTrigger("Attack3");
                 AudioManager.Instance.PlaySFX(SoundEffect.Attack);
 
-                // Tính toán điểm xuất phát của cầu lửa (cao 1.1f mét ngang ngực nhân vật mới)
-                Vector3 spawnOffset = new Vector3(isFacingRight ? 0.8f : -0.8f, 1.1f, 0f);
-                Vector2 spawnPos = firePoint != null ? (Vector2)firePoint.position : (Vector2)(transform.position + spawnOffset);
-
-                GameObject fireballObj = null;
-                if (fireballPrefab != null)
-                {
-                    fireballObj = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
-                }
-                else
-                {
-                    // Tạo cầu lửa bằng code nếu chưa gán Prefab để người chơi test được ngay
-                    fireballObj = CreateProceduralFireball(spawnPos);
-                }
-
-                if (fireballObj != null)
-                {
-                    Fireball fireball = fireballObj.GetComponent<Fireball>();
-                    if (fireball == null)
-                    {
-                        fireball = fireballObj.AddComponent<Fireball>();
-                    }
-                    // Sát thương cầu lửa tỷ lệ theo sát thương thực tế của người chơi (1.5x)
-                    fireball.damage = Mathf.RoundToInt(stats.TotalDamage * 1.5f);
-                    Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
-                    fireball.Setup(dir);
-                }
-                Debug.Log("[Fireball Input] Đã xuất chiêu Hỏa Cầu thành công!");
+                // Khởi chạy Coroutine trì hoãn bắn chưởng để đồng bộ với khung hình vung kiếm của Attack3
+                StartCoroutine(SpawnFireballWithEffectDelay(0.25f, stats.TotalDamage));
             }
         }
+    }
+
+    private System.Collections.IEnumerator SpawnFireballWithEffectDelay(float delay, int playerDamage)
+    {
+        yield return new WaitForSeconds(delay);
+        if (isDead) yield break;
+
+        // Tính toán điểm xuất phát của cầu lửa dựa trên vị trí hiện tại tại thời điểm bắn (cao 1.1f mét ngang ngực)
+        Vector3 spawnOffset = new Vector3(isFacingRight ? 0.8f : -0.8f, 1.1f, 0f);
+        Vector2 spawnPos = firePoint != null ? (Vector2)firePoint.position : (Vector2)(transform.position + spawnOffset);
+
+        // Sinh hiệu ứng slash visual chém kiếm để đồng bộ với hoạt ảnh vung kiếm chém lửa ra
+        SpawnSlashEffect(spawnPos, false, false);
+
+        GameObject fireballObj = null;
+        if (fireballPrefab != null)
+        {
+            fireballObj = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+        }
+        else
+        {
+            // Tạo cầu lửa bằng code nếu chưa gán Prefab để người chơi test được ngay
+            fireballObj = CreateProceduralFireball(spawnPos);
+        }
+
+        if (fireballObj != null)
+        {
+            Fireball fireball = fireballObj.GetComponent<Fireball>();
+            if (fireball == null)
+            {
+                fireball = fireballObj.AddComponent<Fireball>();
+            }
+            // Sát thương cầu lửa tỷ lệ theo sát thương thực tế của người chơi (1.5x)
+            fireball.damage = Mathf.RoundToInt(playerDamage * 1.5f);
+            Vector2 dir = isFacingRight ? Vector2.right : Vector2.left;
+            fireball.Setup(dir);
+        }
+        Debug.Log("[Fireball] Đã phóng cầu lửa kèm hiệu ứng chém chưởng thành công sau độ trễ!");
     }
 
     /// <summary>
